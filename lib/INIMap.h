@@ -37,24 +37,25 @@ typedef map<string, string> keymap;
 typedef map<string, keymap> inimap;
 typedef vector<string> TagList;
 
-class INIMap {
-private:
-	inimap data;
-public:
-	INIMap ();
-	virtual ~INIMap ();
-	virtual bool ReadFile (const TCHAR* filename,const TCHAR* filename_Old);
-	virtual bool WriteFile (const TCHAR* filename) const;
-	virtual keymap &operator[](cstring &section);
-	virtual keymap &operator[](const char *section);
-	virtual bool Exists(cstring &section) const;
-	virtual bool Exists(cstring &section, cstring &tag) const;
-	virtual bool DeleteSection (cstring &section);
-	virtual bool DeleteKey(cstring &section, cstring &key);
-	virtual void Clear();
-    virtual bool FileExists(const TCHAR* filename);
-	// query for a list of matching Tag with input string
-	virtual vector<string> queryTags(cstring & section, cstring & key);
+class INIMap
+{
+    private:
+        inimap data;
+    public:
+        INIMap ();
+        virtual ~INIMap ();
+        virtual bool ReadFile ( const TCHAR *filename, const TCHAR *filename_Old );
+        virtual bool WriteFile ( const TCHAR *filename ) const;
+        virtual keymap &operator[]( cstring &section );
+        virtual keymap &operator[]( const char *section );
+        virtual bool Exists( cstring &section ) const;
+        virtual bool Exists( cstring &section, cstring &tag ) const;
+        virtual bool DeleteSection ( cstring &section );
+        virtual bool DeleteKey( cstring &section, cstring &key );
+        virtual void Clear();
+        virtual bool FileExists( const TCHAR *filename );
+        // query for a list of matching Tag with input string
+        virtual vector<string> queryTags( cstring &section, cstring &key );
 };
 
 #endif
