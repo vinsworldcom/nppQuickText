@@ -1,0 +1,51 @@
+------------------------------------------------------------------------------------------------------------------------
+v 0.2.2 mod v2 (2010-06-01)
+========================================================================================================================
+Added:
+	+ 	Config file: QuickText.conf.ini with following options:
+		+ allowedChars	-	characters which are valid for tags (snippets names).
+		+ lang_menu		-	Languages (separated by ",") occurring in plugin "Options..." dialog
+							(GUI for editing snippets).
+
+	+	"Open Tags File" command in plugin menu
+	+	"Open Config File" command in plugin menu
+	+	Default shortcut combo (ctrl + shift + F5) for "Refresh Configuration" command
+	+	Sources package
+		
+Changed:
+	*	Tags auto-completion appears even without any character inserted. Only need to push shortcut key combo
+		(default ctrl + ENTER)
+	
+	*	Sources cleanup + some descriptive comments
+	*	GLOBAL group now has number "255" irrespective of number of supported (by notepad++) languages and
+		"lang_menu" (in QuickText.conf.ini) values.
+
+Fixed:
+	*	Tags auto-completion with GLOBAL group, so on the list are now tags from current language group and GLOBAL GROUP.
+	*	Newline translation in "Options..." dialog (was dependent on current file settings, which was incorrect).
+		CRLF has to be used in QuickText.ini file now, to translate newline correctly in "Options..." dialog.
+	
+Removed:
+	-	Many unused files from sources package.
+	-	Support for ANSI version
+
+------------------------------------------------------------------------------------------------------------------------
+v 0.2.2 mod v1 (2010-05-03)
+========================================================================================================================
+Added:
+	+ 	"._-" to allowed characters for tag names (it should be configurable btw, but I didn't have a time for playing 
+		with this)
+		
+	+	"Refresh Configuration" command in plugin menu (it was commented out in sources), which reloads configuration
+		file
+		
+Changed:
+	*	default shortcut key to ctrl + enter (it can be changed to anything else besides tab)
+	*	behavior of hotspots (it was broken), I don't know how to explain this changes – just test it
+
+Fixed:
+	*	tags auto-completion and change its behavior, so on the list are now only tags which begins with typed part
+		(originally on the list was tags which contains typed part in any place)
+		
+Removed:
+	-	Ability to use tab as shortcut key, because of many related with it bugs
