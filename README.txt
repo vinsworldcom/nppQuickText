@@ -32,7 +32,7 @@ BUILD
     For 32-bit:
       [x86 Native Tools Command Prompt for VS 2017]
       C:\> set Configuration=Release
-      C:\> set Platform=Win32
+      C:\> set Platform=x86
       C:\> msbuild
     
     For 64-bit:
@@ -43,7 +43,14 @@ BUILD
 
 INSTALLATION
 
-    Copy the Release\
+    Copy the:
+    
+    32-bit:
+        ./bin/QuickText.dll
+       
+    64-bit:
+        ./bin64/QuickText.dll
+
     to the Notepad++ plugins folder:
       - In N++ <7.6, directly in the plugins/ folder
       - In N++ >=7.6, in a directory called QuickText in the plugins/ folder
