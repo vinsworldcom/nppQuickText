@@ -15,9 +15,13 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-Original Link:   http://sourceforge.net/projects/quicktext/
-Original Author: Joao Moreno <alph.pt@gmail.com>, Jing Teng <jingbeta@gmail.com>
-Based on Version: 0.0.2.2 (TonyM)
+Original Link:    http://sourceforge.net/projects/quicktext/
+Original Author:  Joao Moreno <alph.pt@gmail.com>, Jing Teng <jingbeta@gmail.com>
+Original Version: 0.0.2.1
+
+Based on Version: 0.0.2.2 
+    Link:         https://sourceforge.net/p/quicktext/patches/4/
+    Author:       TonyM
 
 DESCRIPTION
 
