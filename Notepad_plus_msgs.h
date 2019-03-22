@@ -20,48 +20,50 @@
 
 //#include "menuCmdID.h"
 
-enum LangType {L_TXT, L_PHP , L_C, L_CPP, L_CS, L_OBJC, L_JAVA, L_RC,\
-L_HTML, L_XML, L_MAKEFILE, L_PASCAL, L_BATCH, L_INI, L_NFO, L_USER,\
-L_ASP, L_SQL, L_VB, L_JS, L_CSS, L_PERL, L_PYTHON, L_LUA,\
-L_TEX, L_FORTRAN, L_BASH, L_FLASH, L_NSIS, L_TCL, L_LISP, L_SCHEME,\
-L_ASM, L_DIFF, L_PROPS, L_PS, L_RUBY, L_SMALLTALK, L_VHDL, L_KIX, L_AU3,\
-L_CAML, L_ADA, L_VERILOG, L_MATLAB, L_HASKELL, L_INNO, L_SEARCHRESULT,\
-L_CMAKE, L_YAML,\
+enum LangType {L_TXT, L_PHP, L_C, L_CPP, L_CS, L_OBJC, L_JAVA, L_RC, \
+               L_HTML, L_XML, L_MAKEFILE, L_PASCAL, L_BATCH, L_INI, L_NFO, L_USER, \
+               L_ASP, L_SQL, L_VB, L_JS, L_CSS, L_PERL, L_PYTHON, L_LUA, \
+               L_TEX, L_FORTRAN, L_BASH, L_FLASH, L_NSIS, L_TCL, L_LISP, L_SCHEME, \
+               L_ASM, L_DIFF, L_PROPS, L_PS, L_RUBY, L_SMALLTALK, L_VHDL, L_KIX, L_AU3, \
+               L_CAML, L_ADA, L_VERILOG, L_MATLAB, L_HASKELL, L_INNO, L_SEARCHRESULT, \
+               L_CMAKE, L_YAML, \
 // The end of enumated language type, so it should be always at the end
-L_EXTERNAL};
-enum winVer{WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, WV_S2003, WV_XPX64, WV_VISTA, WV_WIN7};
+               L_EXTERNAL
+              };
+enum winVer {WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, WV_S2003, WV_XPX64, WV_VISTA, WV_WIN7};
 
 
 //#include "deprecatedSymbols.h"
 
-//Here you can find how to use these messages : http://notepad-plus.sourceforge.net/uk/plugins-HOWTO.php 
+//Here you can find how to use these messages : http://notepad-plus.sourceforge.net/uk/plugins-HOWTO.php
 #define NPPMSG  (WM_USER + 1000)
 
 #define NPPM_GETCURRENTSCINTILLA  (NPPMSG + 4)
 #define NPPM_GETCURRENTLANGTYPE  (NPPMSG + 5)
 #define NPPM_SETCURRENTLANGTYPE  (NPPMSG + 6)
 
-#define NPPM_GETNBOPENFILES			(NPPMSG + 7)
-#define ALL_OPEN_FILES			0
-#define PRIMARY_VIEW			1
-#define SECOND_VIEW				2
+#define NPPM_GETNBOPENFILES         (NPPMSG + 7)
+#define ALL_OPEN_FILES          0
+#define PRIMARY_VIEW            1
+#define SECOND_VIEW             2
 
-#define NPPM_GETOPENFILENAMES		(NPPMSG + 8)
+#define NPPM_GETOPENFILENAMES       (NPPMSG + 8)
 
 
-#define NPPM_MODELESSDIALOG		 (NPPMSG + 12)
-#define MODELESSDIALOGADD		0
-#define MODELESSDIALOGREMOVE	1
+#define NPPM_MODELESSDIALOG      (NPPMSG + 12)
+#define MODELESSDIALOGADD       0
+#define MODELESSDIALOGREMOVE    1
 
 #define NPPM_GETNBSESSIONFILES (NPPMSG + 13)
 #define NPPM_GETSESSIONFILES (NPPMSG + 14)
 #define NPPM_SAVESESSION (NPPMSG + 15)
 #define NPPM_SAVECURRENTSESSION (NPPMSG + 16)
 
-struct sessionInfo {
-	TCHAR* sessionFilePathName;
-	int nbFile;
-	TCHAR** files;
+struct sessionInfo
+{
+    TCHAR *sessionFilePathName;
+    int nbFile;
+    TCHAR **files;
 };
 
 #define NPPM_GETOPENFILENAMESPRIMARY (NPPMSG + 17)
@@ -103,7 +105,7 @@ struct sessionInfo {
 //void NPPM_LAUNCHFINDINFILESDLG(TCHAR * dir2Search, TCHAR * filtre)
 
 #define NPPM_DMMSHOW (NPPMSG + 30)
-#define NPPM_DMMHIDE	(NPPMSG + 31)
+#define NPPM_DMMHIDE    (NPPMSG + 31)
 #define NPPM_DMMUPDATEDISPINFO (NPPMSG + 32)
 //void NPPM_DMMxxx(0, tTbData->hClient)
 
@@ -125,17 +127,18 @@ struct sessionInfo {
 #define NPPM_SAVECURRENTFILE (NPPMSG + 38)
 //BOOL WM_SWITCHTOFILE(0, 0)
 
-#define NPPM_SAVEALLFILES	(NPPMSG + 39)
+#define NPPM_SAVEALLFILES   (NPPMSG + 39)
 //BOOL NPPM_SAVEALLFILES(0, 0)
 
-#define NPPM_SETMENUITEMCHECK	(NPPMSG + 40)
-//void WM_PIMENU_CHECK(UINT	funcItem[X]._cmdID, TRUE/FALSE)
+#define NPPM_SETMENUITEMCHECK   (NPPMSG + 40)
+//void WM_PIMENU_CHECK(UINT funcItem[X]._cmdID, TRUE/FALSE)
 
 #define NPPM_ADDTOOLBARICON (NPPMSG + 41)
 //void WM_ADDTOOLBARICON(UINT funcItem[X]._cmdID, toolbarIcons icon)
-struct toolbarIcons {
-	HBITMAP	hToolbarBmp;
-	HICON	hToolbarIcon;
+struct toolbarIcons
+{
+    HBITMAP hToolbarBmp;
+    HICON   hToolbarIcon;
 };
 
 #define NPPM_GETWINDOWSVERSION (NPPMSG + 42)
@@ -159,10 +162,11 @@ struct toolbarIcons {
 //BOOL NPPM_MSGTOPLUGIN(TCHAR *destModuleName, CommunicationInfo *info)
 // return value is TRUE when the message arrive to the destination plugins.
 // if destModule or info is NULL, then return value is FALSE
-struct CommunicationInfo {
-	long internalMsg;
-	const TCHAR * srcModuleName;
-	void * info; // defined by plugin
+struct CommunicationInfo
+{
+    long internalMsg;
+    const TCHAR *srcModuleName;
+    void *info;  // defined by plugin
 };
 
 #define NPPM_MENUCOMMAND (NPPMSG + 48)
@@ -176,7 +180,7 @@ struct CommunicationInfo {
 
 #define NPPM_GETNPPVERSION (NPPMSG + 50)
 // int NPPM_GETNPPVERSION(0, 0)
-// return version 
+// return version
 // ex : v4.6
 // HIWORD(version) == 4
 // LOWORD(version) == 6
@@ -195,14 +199,14 @@ struct CommunicationInfo {
 // INT NPPM_GETPOSFROMBUFFERID(INT bufferID, 0)
 // Return VIEW|INDEX from a buffer ID. -1 if the bufferID non existing
 //
-// VIEW takes 2 highest bits and INDEX (0 based) takes the rest (30 bits) 
+// VIEW takes 2 highest bits and INDEX (0 based) takes the rest (30 bits)
 // Here's the values for the view :
 //  MAIN_VIEW 0
 //  SUB_VIEW  1
 
 #define NPPM_GETFULLPATHFROMBUFFERID (NPPMSG + 58)
 // INT NPPM_GETFULLPATHFROMBUFFERID(INT bufferID, TCHAR *fullFilePath)
-// Get full path file name from a bufferID. 
+// Get full path file name from a bufferID.
 // Return -1 if the bufferID non existing, otherwise the number of TCHAR copied/to copy
 // User should call it with fullFilePath be NULL to get the number of TCHAR (not including the nul character),
 // allocate fullFilePath with the return values + 1, then call it again to get  full path file name
@@ -309,24 +313,24 @@ struct CommunicationInfo {
 // fullPathName2Open indicates the full file path name to be opened.
 // The return value is TRUE (1) if the operation is successful, otherwise FALSE (0).
 
-#define	RUNCOMMAND_USER    (WM_USER + 3000)
-#define NPPM_GETFULLCURRENTPATH		(RUNCOMMAND_USER + FULL_CURRENT_PATH)
-#define NPPM_GETCURRENTDIRECTORY	(RUNCOMMAND_USER + CURRENT_DIRECTORY)
-#define NPPM_GETFILENAME			(RUNCOMMAND_USER + FILE_NAME)
-#define NPPM_GETNAMEPART			(RUNCOMMAND_USER + NAME_PART)
-#define NPPM_GETEXTPART				(RUNCOMMAND_USER + EXT_PART)
-#define NPPM_GETCURRENTWORD			(RUNCOMMAND_USER + CURRENT_WORD)
-#define NPPM_GETNPPDIRECTORY		(RUNCOMMAND_USER + NPP_DIRECTORY)
+#define RUNCOMMAND_USER    (WM_USER + 3000)
+#define NPPM_GETFULLCURRENTPATH     (RUNCOMMAND_USER + FULL_CURRENT_PATH)
+#define NPPM_GETCURRENTDIRECTORY    (RUNCOMMAND_USER + CURRENT_DIRECTORY)
+#define NPPM_GETFILENAME            (RUNCOMMAND_USER + FILE_NAME)
+#define NPPM_GETNAMEPART            (RUNCOMMAND_USER + NAME_PART)
+#define NPPM_GETEXTPART             (RUNCOMMAND_USER + EXT_PART)
+#define NPPM_GETCURRENTWORD         (RUNCOMMAND_USER + CURRENT_WORD)
+#define NPPM_GETNPPDIRECTORY        (RUNCOMMAND_USER + NPP_DIRECTORY)
 // BOOL NPPM_GETXXXXXXXXXXXXXXXX(size_t strLen, TCHAR *str)
 // where str is the allocated TCHAR array,
-//	     strLen is the allocated array size
+//       strLen is the allocated array size
 // The return value is TRUE when get generic_string operation success
 // Otherwise (allocated array size is too small) FALSE
 
-#define NPPM_GETCURRENTLINE			(RUNCOMMAND_USER + CURRENT_LINE)
+#define NPPM_GETCURRENTLINE         (RUNCOMMAND_USER + CURRENT_LINE)
 // INT NPPM_GETCURRENTLINE(0, 0)
 // return the caret current position line
-#define NPPM_GETCURRENTCOLUMN			(RUNCOMMAND_USER + CURRENT_COLUMN)
+#define NPPM_GETCURRENTCOLUMN           (RUNCOMMAND_USER + CURRENT_COLUMN)
 // INT NPPM_GETCURRENTCOLUMN(0, 0)
 // return the caret current position column
 
@@ -410,10 +414,10 @@ struct CommunicationInfo {
 //scnNotification->nmhdr.idFrom = cmdID;
 //where ShortcutKeyStructurePointer is pointer of struct ShortcutKey:
 //struct ShortcutKey {
-//	bool _isCtrl;
-//	bool _isAlt;
-//	bool _isShift;
-//	UCHAR _key;
+//  bool _isCtrl;
+//  bool _isAlt;
+//  bool _isShift;
+//  UCHAR _key;
 //};
 
 #define NPPN_FILEBEFORELOAD (NPPN_FIRST + 14) // To notify plugins that the current file is about to be loaded
