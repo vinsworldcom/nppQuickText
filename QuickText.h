@@ -28,7 +28,7 @@ void clear();
 void loadConfig();
 bool restoreKeyStroke( int cursorPos, HWND &scintilla );
 HWND &getCurrentHScintilla();
-void stripBreaks( string &str, cstring &indent );
+void stripBreaks( string &str, bool doc, cstring &indent );
 void revStripBreaks( string &str );
 void decodeStr( cstring &str, int start,
                 string &indent ); // Uses global var cQuickText.

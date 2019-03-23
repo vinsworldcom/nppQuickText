@@ -333,27 +333,28 @@ void openTagsFile()
 }
 
 // Strip all the line breaks
-void stripBreaks( string &str, cstring &indent = "" )
+void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
 {
     // Get line break chars
     //+@TonyM: incorrect newline detection
-    //-@TonyM: HWND scintilla = getCurrentHScintilla();
-    //-@TonyM: int mode = static_cast<int>(SendMessage(scintilla, SCI_GETEOLMODE, 0, 0));
     char newline[3] = "\r\n";
-    //+@TonyM: incorrect newline detection
-    /*-@TonyM:
-    switch (mode)
+    if ( doc )
     {
-        case SC_EOL_CRLF:
-            strcpy(newline, "\r\n");
-            break;
-        case SC_EOL_CR:
-            strcpy(newline, "\r");
-            break;
-        case SC_EOL_LF:
-            strcpy(newline, "\n");
-            break;
-    }*/
+        HWND scintilla = getCurrentHScintilla();
+        int mode = static_cast<int>(SendMessage(scintilla, SCI_GETEOLMODE, 0, 0));
+        switch (mode)
+        {
+            case SC_EOL_CRLF:
+                strcpy(newline, "\r\n");
+                break;
+            case SC_EOL_CR:
+                strcpy(newline, "\r");
+                break;
+            case SC_EOL_LF:
+                strcpy(newline, "\n");
+                break;
+        }
+    }
 
     unsigned i;
     int newlineLength = ( int )strlen( newline );
@@ -386,7 +387,7 @@ void revStripBreaks( string &str )
 void decodeStr( cstring &str, int start, string &indent )
 {
     cQuickText.text = str;
-    stripBreaks( cQuickText.text, indent );
+    stripBreaks( cQuickText.text, true, indent );
 
     for ( string::iterator i = cQuickText.text.begin();
             i != cQuickText.text.end(); )
