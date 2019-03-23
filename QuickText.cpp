@@ -32,8 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 const TCHAR PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
 //+@TonyM: nbFunc = 2 -> nbFunc = 5;
 const int nbFunc = 5; // number of functions
-const std::string
-LANGUAGES ( "TXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,NFO,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,EXTERNAL,GLOBAL" );
+const std::string LANGUAGES ( "TXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,NFO,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,EXTERNAL,GLOBAL" );
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
@@ -173,7 +172,16 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
                         if ( *i > notifyCode->position )
                             ( *i ) += notifyCode->length;
 
-                    cQuickText.hotSpotsLen[cQuickText.cHotSpot] += notifyCode->length;
+                    // 2019-03-23:MVINCENT: if current position is at the end
+                    //   of inserted tag text the clear the tag hotspots else
+                    //   inserted chars add to the overall length
+                    int currpos = static_cast<int>( SendMessage( getCurrentHScintilla(),
+                                                    SCI_GETCURRENTPOS, 0, 0 ) );
+
+                    if ( currpos == cQuickText.hotSpotsPos[cQuickText.hotSpotsPos.size() - 1] )
+                        clear();
+                    else
+                        cQuickText.hotSpotsLen[cQuickText.cHotSpot] += notifyCode->length;
                 }
 
                 if ( notifyCode->modificationType & SC_MOD_DELETETEXT )
@@ -192,16 +200,14 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
                     cQuickText.hotSpotsLen[cQuickText.cHotSpot] -= notifyCode->length;
                 }
             }
-
-            break;
         }
+        break;
 
         // check if outside a hotspot
         case SCN_UPDATEUI:
         {
-            int currpos;
-            currpos = static_cast<int>( SendMessage( getCurrentHScintilla(),
-                                        SCI_GETCURRENTPOS, 0, 0 ) );
+            int currpos = static_cast<int>( SendMessage( getCurrentHScintilla(),
+                                            SCI_GETCURRENTPOS, 0, 0 ) );
             bool r = true;
 
             for ( unsigned int i = 0; i < cQuickText.hotSpotsPos.size(); i++ )
@@ -212,6 +218,10 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
             if ( r )
                 clear();
         }
+        break;
+
+        default:
+            return;
     }
 }
 
@@ -246,7 +256,8 @@ bool isValidKey( const char *key )
 {
     string skey = key;
 
-    if ( skey.find_first_not_of( allowedChars ) != static_cast<unsigned>(string::npos) )
+    if ( skey.find_first_not_of( allowedChars ) != static_cast<unsigned>
+            ( string::npos ) )
         return false;
 
     return true;
@@ -362,7 +373,8 @@ void revStripBreaks( string &str )
 {
     unsigned i;
 
-    while ( ( i = static_cast<unsigned>( str.find( "\r\n" ) ) ) != static_cast<unsigned>(str.npos) )
+    while ( ( i = static_cast<unsigned>( str.find( "\r\n" ) ) ) !=
+            static_cast<unsigned>( str.npos ) )
     {
         str.erase( i, 2 );
         str.insert( i, "\\n" );
