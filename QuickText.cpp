@@ -79,7 +79,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall,
 
             // funcItems setting
             funcItems[0]._pFunc = QuickText;
-            lstrcpy( funcItems[0]._itemName, _T( "Replace Tag" ) );
+            lstrcpy( funcItems[0]._itemName, _T( "&Replace Tag" ) );
             funcItems[0]._init2Check = false;
             funcItems[0]._pShKey = new ShortcutKey;
             funcItems[0]._pShKey->_isAlt = false;
@@ -88,13 +88,13 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall,
             funcItems[0]._pShKey->_key = VK_RETURN;
 
             funcItems[1]._pFunc = loadConfig;
-            lstrcpy( funcItems[1]._itemName, _T( "Options..." ) );
+            lstrcpy( funcItems[1]._itemName, _T( "&Options..." ) );
             funcItems[1]._init2Check = false;
             funcItems[1]._pShKey = NULL;
 
             //+@TonyM: Added 3 new plugin menu commands
             funcItems[2]._pFunc = refreshINIMap;
-            lstrcpy( funcItems[2]._itemName, _T( "Refresh Configuration" ) );
+            lstrcpy( funcItems[2]._itemName, _T( "Re&fresh Configuration" ) );
             funcItems[2]._init2Check = false;
             funcItems[2]._pShKey = new ShortcutKey;
             funcItems[2]._pShKey->_isAlt = false;
@@ -103,11 +103,11 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall,
             funcItems[2]._pShKey->_key = VK_F5;
 
             funcItems[3]._pFunc = openTagsFile;
-            lstrcpy( funcItems[3]._itemName, _T( "Open Tags File" ) );
+            lstrcpy( funcItems[3]._itemName, _T( "Open &Tags File" ) );
             funcItems[3]._init2Check = false;
 
             funcItems[4]._pFunc = openConfigFile;
-            lstrcpy( funcItems[4]._itemName, _T( "Open Config File" ) );
+            lstrcpy( funcItems[4]._itemName, _T( "Open &Config File" ) );
             funcItems[4]._init2Check = false;
 
             Config.indenting = true;
