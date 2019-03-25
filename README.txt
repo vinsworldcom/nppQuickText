@@ -19,26 +19,26 @@ Original Link:    http://sourceforge.net/projects/quicktext/
 Original Author:  Joao Moreno <alph.pt@gmail.com>, Jing Teng <jingbeta@gmail.com>
 Original Version: 0.0.2.1
 
-Based on Version: 0.0.2.2 
+Based on Version: 0.0.2.2
     Link:         https://sourceforge.net/p/quicktext/patches/4/
     Author:       TonyM
 
 DESCRIPTION
 
-    QuickText is a Notepad++ plugin for quick text substitution, including 
+    QuickText is a Notepad++ plugin for quick text substitution, including
     multi field inputs. It's similar to Tab Triggers in TextMate.
 
 BUILD
 
-    I compiled with MS Visual Studio Community 2017 and this seems to work 
+    I compiled with MS Visual Studio Community 2017 and this seems to work
     OK.
-    
+
     For 32-bit:
       [x86 Native Tools Command Prompt for VS 2017]
       C:\> set Configuration=Release
       C:\> set Platform=x86
       C:\> msbuild
-    
+
     For 64-bit:
       [x64 Native Tools Command Prompt for VS 2017]
       C:\> set Configuration=Release
@@ -48,10 +48,10 @@ BUILD
 INSTALLATION
 
     Copy the:
-    
+
     32-bit:
         ./bin/QuickText.dll
-       
+
     64-bit:
         ./bin64/QuickText.dll
 
@@ -59,26 +59,37 @@ INSTALLATION
       - In N++ <7.6, directly in the plugins/ folder
       - In N++ >=7.6, in a directory called QuickText in the plugins/ folder
         (plugins/QuickText/)
-    
-    NOTE:  The original version put config files in weird places and with 
-           no updated since the Notepad++ 7.6 new plugins architecture, it's 
-           gotten worse.  This version corrects this.  You'll need to put 
+
+    NOTE:  The original version put config files in weird places and with
+           no updated since the Notepad++ 7.6 new plugins architecture, it's
+           gotten worse.  This version corrects this.  You'll need to put
            the following files in their respective directory locations:
-           
+
            QuickText.conf.ini = NPP_INSTALL_DIR/plugins/Config
            QuickText.ini      = NPP_INSTALL_DIR/plugins/QuickText
 
 USAGE
 
-    Use the key shortcut to use QuickText tags from within the current 
+    Use the key shortcut to use QuickText tags from within the current
     Notepad++ document.
-    
+
+    If the Tag insertion hotkey is used and there is no text before it or
+    no valid expansion for the text before it, the Tag insertion hotkey
+    character is inserted.  For example, using "Ctrl+Enter" as the key with
+    no valid expansion just inserts a newline (as if Enter key press).
+
+    NOTE:  Tab can now be used again, Ctrl+Enter still default.  If Tab is
+           used and no valid tag is found as described above, we check to 
+           see if N++ is using Tab-to-Space conversion and if so, insert 
+           the appropriate number of spaces instead of inserting the Tab.
+
 CUSTOMIZATION
 
     To make you're own tags:
-        - First make sure the tag's Language Section already exists. This is done by
-        creating a new section with the code corresponding to the Language.
-        (See LANGUAGE CODES).
+        - Tags file (QuickText.ini) *MUST* use "Windows (CR LF)" line endings.
+        - First make sure the tag's Language Section already exists. This is 
+          done by creating a new section with the code corresponding to the 
+          Language.  See LANGUAGE CODES.
         - Then, for the key of the tag, use only lower/upper case and numbers.
         - Special chars:
             - $ hotspots
@@ -91,7 +102,7 @@ EXAMPLE
 
  *** (8 is the Language Code for HTML)
 
-[8]  
+[8]
 link=<a href="$">$</a>
 
 LANGUAGE CODES
