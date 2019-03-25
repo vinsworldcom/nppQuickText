@@ -43,12 +43,13 @@ bool INIMap::FileExists( const TCHAR *filename )
 
 }
 
-bool INIMap::ReadFile ( const TCHAR *filename, const TCHAR *filename_Old )
+bool INIMap::ReadFile ( const TCHAR *filename )
 {
     // empty filename?
     if ( !filename || !filename[0] )
         return false;
 
+/*
     // config files (.ini) exist?
     bool newConfigExist = FileExists( filename );
     bool oldConfigExist = FileExists( filename_Old );
@@ -65,6 +66,7 @@ bool INIMap::ReadFile ( const TCHAR *filename, const TCHAR *filename_Old )
         // moving old ini file to new directory
         _trename( filename_Old, filename );
     }
+*/
 
     // reading config files
     ifstream configFile;

@@ -65,5 +65,3 @@ HINSTANCE appInstance;
 // *** Variables
 INIMap tags, tags_replica;
 basic_string<TCHAR> tagsFileName;
-basic_string<TCHAR> tagsFileName_Old;
-basic_string<TCHAR> config_dir;

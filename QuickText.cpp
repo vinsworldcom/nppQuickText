@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif // QUICKTEXT_H
 
 #include <intsafe.h>
+#include <shlwapi.h>
 
 #define NEW_HOTSPOT -1
 #define SZ_LANG 32
@@ -29,10 +30,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define SZ_TEXT 512
 
 // *** Plugin specific variables
-const TCHAR PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
+const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
 //+@TonyM: nbFunc = 2 -> nbFunc = 5;
 const int nbFunc = 5; // number of functions
 const std::string LANGUAGES ( "TXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,NFO,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,EXTERNAL,GLOBAL" );
+
+const TCHAR confFileName[] = TEXT( "QuickText.conf.ini" );
+const TCHAR iniFileName[]  = TEXT( "QuickText.ini" );
+basic_string<TCHAR> confFilePath;
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
@@ -54,6 +59,21 @@ vector<string> lang_menu( 256 );
 //+@TonyM: Unused - GLOBAL group has number "255" now.
 int IDM_LANG_GLOBAL = 51; // sizeof(LangType) + 1
 
+void commandMenuCleanUp()
+{
+    // Don't forget to deallocate your shortcut here
+    delete funcItems[0]._pShKey;
+}
+
+void pluginInit( HANDLE /* hModule */)
+{
+
+}
+
+void pluginCleanUp()
+{
+
+}
 
 // *** Main
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall,
@@ -62,67 +82,12 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall,
     switch ( reasonForCall )
     {
         case DLL_PROCESS_ATTACH:
-        {
-            // ConfigFile path
-            TCHAR temp[256];
-            GetModuleFileName( ( HMODULE )hModule, temp, sizeof( temp ) );
-            tagsFileName = temp;
-            unsigned int pos;
-            pos = static_cast<unsigned int>( tagsFileName.rfind( _T( "\\" ) ) );
-            tagsFileName.erase( pos );
-            pos = static_cast<unsigned int>( tagsFileName.rfind( _T( "\\" ) ) );
-            tagsFileName.erase( pos );
-
-            tagsFileName_Old = tagsFileName + _T( "\\QuickText.ini" );
-            config_dir = tagsFileName + _T( "\\plugins\\Config" );
-            tagsFileName.append( _T( "\\plugins\\Config\\QuickText.ini" ) );
-
-            // funcItems setting
-            funcItems[0]._pFunc = QuickText;
-            lstrcpy( funcItems[0]._itemName, _T( "&Replace Tag" ) );
-            funcItems[0]._init2Check = false;
-            funcItems[0]._pShKey = new ShortcutKey;
-            funcItems[0]._pShKey->_isAlt = false;
-            funcItems[0]._pShKey->_isCtrl = true;
-            funcItems[0]._pShKey->_isShift = false;
-            funcItems[0]._pShKey->_key = VK_RETURN;
-
-            funcItems[1]._pFunc = loadConfig;
-            lstrcpy( funcItems[1]._itemName, _T( "&Options..." ) );
-            funcItems[1]._init2Check = false;
-            funcItems[1]._pShKey = NULL;
-
-            //+@TonyM: Added 3 new plugin menu commands
-            funcItems[2]._pFunc = refreshINIMap;
-            lstrcpy( funcItems[2]._itemName, _T( "Re&fresh Configuration" ) );
-            funcItems[2]._init2Check = false;
-            funcItems[2]._pShKey = new ShortcutKey;
-            funcItems[2]._pShKey->_isAlt = false;
-            funcItems[2]._pShKey->_isCtrl = true;
-            funcItems[2]._pShKey->_isShift = true;
-            funcItems[2]._pShKey->_key = VK_F5;
-
-            funcItems[3]._pFunc = openTagsFile;
-            lstrcpy( funcItems[3]._itemName, _T( "Open &Tags File" ) );
-            funcItems[3]._init2Check = false;
-
-            funcItems[4]._pFunc = openConfigFile;
-            lstrcpy( funcItems[4]._itemName, _T( "Open &Config File" ) );
-            funcItems[4]._init2Check = false;
-
-            Config.indenting = true;
-
-            cQuickText.editing = false;
-            //+@TonyM: refreshINIMap() -> _refreshINIFiles() - to skip displaying
-            //+@TonyM: MessageBox with confirmation of INI files reload on the start of Notepad++.
-            _refreshINIFiles();
-
+            pluginInit( hModule );
             appInstance = ( HINSTANCE ) hModule;
-        }
-        break;
+            break;
 
         case DLL_PROCESS_DETACH:
-            delete funcItems[0]._pShKey;
+            pluginCleanUp();
             break;
 
         case DLL_THREAD_ATTACH:
@@ -135,16 +100,78 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall,
     return TRUE;
 }
 
+void commandMenuInit()
+{
+
+    // ConfigFile path
+    TCHAR temp[256];
+    GetModuleFileName( ( HMODULE )appInstance, temp, sizeof( temp ) );
+    tagsFileName = temp;
+    unsigned int pos;
+    pos = static_cast<unsigned int>( tagsFileName.rfind( _T( "\\" ) ) );
+    tagsFileName.erase( pos );
+    tagsFileName.append( _T("\\") );
+    tagsFileName.append( iniFileName );
+
+    // get path of plugin configuration
+    TCHAR get_confFilePath[MAX_PATH];
+    ::SendMessage( nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH,
+                   ( LPARAM )get_confFilePath );
+
+    // if config path doesn't exist, we create it
+    if ( PathFileExists( get_confFilePath ) == FALSE )
+        ::CreateDirectory( get_confFilePath, NULL );
+
+    // make your plugin config file full file path name
+    PathAppend( get_confFilePath, confFileName );
+    confFilePath = get_confFilePath;
+
+    // funcItems setting
+    funcItems[0]._pFunc = QuickText;
+    lstrcpy( funcItems[0]._itemName, _T( "&Replace Tag" ) );
+    funcItems[0]._init2Check = false;
+    funcItems[0]._pShKey = new ShortcutKey;
+    funcItems[0]._pShKey->_isAlt = false;
+    funcItems[0]._pShKey->_isCtrl = true;
+    funcItems[0]._pShKey->_isShift = false;
+    funcItems[0]._pShKey->_key = VK_RETURN;
+
+    funcItems[1]._pFunc = loadConfig;
+    lstrcpy( funcItems[1]._itemName, _T( "&Options..." ) );
+    funcItems[1]._init2Check = false;
+
+    //+@TonyM: Added 3 new plugin menu commands
+    funcItems[2]._pFunc = refreshINIMap;
+    lstrcpy( funcItems[2]._itemName, _T( "Re&fresh Configuration" ) );
+    funcItems[2]._init2Check = false;
+
+    funcItems[3]._pFunc = openTagsFile;
+    lstrcpy( funcItems[3]._itemName, _T( "Open &Tags File" ) );
+    funcItems[3]._init2Check = false;
+
+    funcItems[4]._pFunc = openConfigFile;
+    lstrcpy( funcItems[4]._itemName, _T( "Open &Config File" ) );
+    funcItems[4]._init2Check = false;
+
+    Config.indenting = true;
+
+    cQuickText.editing = false;
+    //+@TonyM: refreshINIMap() -> _refreshINIFiles() - to skip displaying
+    //+@TonyM: MessageBox with confirmation of INI files reload on the start of Notepad++.
+    _refreshINIFiles();
+}
+
 // Notepad++ - handles
 extern "C" __declspec( dllexport ) void setInfo( NppData notpadPlusData )
 {
     nppData = notpadPlusData;
+    commandMenuInit();
 }
 
 // Notepad++ - nome do plugin
 extern "C" __declspec( dllexport ) const TCHAR *getName()
 {
-    return PLUGIN_NAME;
+    return NPP_PLUGIN_NAME;
 }
 
 // Notepad++ - funcoes
@@ -220,6 +247,12 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
         }
         break;
 
+        case NPPN_SHUTDOWN:
+        {
+            commandMenuCleanUp();
+        }
+        break;
+
         default:
             return;
     }
@@ -263,16 +296,26 @@ bool isValidKey( const char *key )
     return true;
 }
 
+std::string wstrtostr(const std::wstring &wstr)
+{
+    // Convert a Unicode string to an ASCII string
+    std::string strTo;
+    char *szTo = new char[wstr.length() + 1];
+    szTo[wstr.size()] = '\0';
+    WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, szTo, (int)wstr.length(), NULL, NULL);
+    strTo = szTo;
+    delete[] szTo;
+    return strTo;
+}
 
 //+@TonyM: Used without wrapper (refreshINIMap()) to skip displaying
 //+@TonyM: MessageBox with confirmation of INI files reload on the start of Notepad++.
 void _refreshINIFiles()
 {
     tags.Clear();
-    tags.ReadFile( tagsFileName.c_str(), tagsFileName_Old.c_str() );
+    tags.ReadFile( tagsFileName.c_str() );
 
-    std::string ini_file_path       = QTString::ws2s( config_dir ) +
-                                      "\\QuickText.conf.ini";
+    std::string ini_file_path       = wstrtostr(confFilePath.c_str());
     std::string ini_file_section    = "general";
 
     //+@TonyM: Reads allowedChars value from config file on each config refresh
@@ -315,21 +358,19 @@ void refreshINIMap()
     _refreshINIFiles();
     MessageBox( nppData._nppHandle,
                 _T( "QuickText.ini and QuickText.conf.ini files reloaded!" ),
-                _T( "QuickText" ), MB_OK | MB_ICONINFORMATION );
+                NPP_PLUGIN_NAME , MB_OK | MB_ICONINFORMATION );
 }
 
 void openConfigFile()
 {
-    basic_string<TCHAR> file_path = config_dir + _T( "\\QuickText.conf.ini" );
     SendMessage( nppData._nppHandle, NPPM_DOOPEN, 0,
-                 ( LPARAM )file_path.c_str() );
+                 ( LPARAM )confFilePath.c_str() );
 }
 
 void openTagsFile()
 {
-    basic_string<TCHAR> file_path = config_dir + _T( "\\QuickText.ini" );
     SendMessage( nppData._nppHandle, NPPM_DOOPEN, 0,
-                 ( LPARAM )file_path.c_str() );
+                 ( LPARAM )tagsFileName.c_str() );
 }
 
 // Strip all the line breaks
