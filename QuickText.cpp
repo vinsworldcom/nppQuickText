@@ -518,14 +518,14 @@ void QuickText()
 
     // validate the key
     //+@TonyM: to popup autocompletion list without first letter
-    /*-@TonyM
+    //+MVINCENT: we want at least 1 letter - maybe an option for 0?
+    //+MVINCENT: don't think we can restore TAB hotkey with 0 length autoComplete
     if (strlen(tag) == 0 && !cQuickText.editing)
     {
-        // if key is invalid
-        restoreKeyStroke(curPos,scintilla);
+        // if using hotkey with NOTHING before it don't autocomplete
+        restoreKeyStroke( curPos, scintilla );
         return;
     }
-    */
 
 //  if (!isValidKey(tag) && !cQuickText.editing) {
 //      MessageBox(nppData._nppHandle, _T("Only alphanumerical characters."), _T("QuickText"), MB_OK | MB_ICONINFORMATION);
@@ -1020,12 +1020,15 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 // if tag doesn't exist, a tab should be outputted
 bool restoreKeyStroke( int cursorPos, HWND &scintilla )
 {
+/*
     if ( funcItems[0]._pShKey->_isAlt == false &&
             funcItems[0]._pShKey->_isCtrl == false &&
             funcItems[0]._pShKey->_isShift == false &&
             funcItems[0]._pShKey->_key == VK_TAB
        )
     {
+*/
+// TODO:2019-03-25:MVINCENT:how to see if Tab is hotkey then send it if we're here
         // restoring original selection
         SendMessage( scintilla, SCI_SETCURRENTPOS, cursorPos, 0 );
         SendMessage( scintilla, SCI_SETSELECTIONSTART, cursorPos, ( LPARAM )true );
@@ -1035,9 +1038,10 @@ bool restoreKeyStroke( int cursorPos, HWND &scintilla )
         //+@TonyM: Apparently there is: funcItems[0]._pShKey->_key == VK_TAB
         //+@TonyM: But doesn't work correctly
         //-@TonyM: SendMessage(scintilla,SCI_TAB,0,0);
+/*
         return true;
     }
-
+*/
     return false;
 }
 
