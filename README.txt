@@ -25,7 +25,7 @@ Based on Version: 0.0.2.2
 
 DESCRIPTION
 
-    Quicktext is a Notepad++ plugin for quick text substitution, including 
+    QuickText is a Notepad++ plugin for quick text substitution, including 
     multi field inputs. It's similar to Tab Triggers in TextMate.
 
 BUILD
@@ -60,11 +60,19 @@ INSTALLATION
       - In N++ >=7.6, in a directory called QuickText in the plugins/ folder
         (plugins/QuickText/)
     
+    NOTE:  The original version put config files in weird places and with 
+           no updated since the Notepad++ 7.6 new plugins architecture, it's 
+           gotten worse.  This version corrects this.  You'll need to put 
+           the following files in their respective directory locations:
+           
+           QuickText.conf.ini = NPP_INSTALL_DIR/plugins/Config
+           QuickText.ini      = NPP_INSTALL_DIR/plugins/QuickText
+
 USAGE
 
     Use the key shortcut to use QuickText tags from within the current 
     Notepad++ document.
-
+    
 CUSTOMIZATION
 
     To make you're own tags:
