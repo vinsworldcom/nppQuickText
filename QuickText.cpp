@@ -33,7 +33,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
 //+@TonyM: nbFunc = 2 -> nbFunc = 5;
 const int nbFunc = 5; // number of functions
-const std::string LANGUAGES ( "TXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,NFO,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,EXTERNAL,GLOBAL" );
+const std::string
+LANGUAGES ( "TXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,NFO,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,EXTERNAL,GLOBAL" );
 
 const TCHAR confFileName[] = TEXT( "QuickText.conf.ini" );
 const TCHAR iniFileName[]  = TEXT( "QuickText.ini" );
@@ -65,7 +66,7 @@ void commandMenuCleanUp()
     delete funcItems[0]._pShKey;
 }
 
-void pluginInit( HANDLE /* hModule */)
+void pluginInit( HANDLE /* hModule */ )
 {
 
 }
@@ -110,7 +111,7 @@ void commandMenuInit()
     unsigned int pos;
     pos = static_cast<unsigned int>( tagsFileName.rfind( _T( "\\" ) ) );
     tagsFileName.erase( pos );
-    tagsFileName.append( _T("\\") );
+    tagsFileName.append( _T( "\\" ) );
     tagsFileName.append( iniFileName );
 
     // get path of plugin configuration
@@ -296,13 +297,14 @@ bool isValidKey( const char *key )
     return true;
 }
 
-std::string wstrtostr(const std::wstring &wstr)
+std::string wstrtostr( const std::wstring &wstr )
 {
     // Convert a Unicode string to an ASCII string
     std::string strTo;
     char *szTo = new char[wstr.length() + 1];
     szTo[wstr.size()] = '\0';
-    WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, szTo, (int)wstr.length(), NULL, NULL);
+    WideCharToMultiByte( CP_ACP, 0, wstr.c_str(), -1, szTo,
+                         ( int )wstr.length(), NULL, NULL );
     strTo = szTo;
     delete[] szTo;
     return strTo;
@@ -315,7 +317,7 @@ void _refreshINIFiles()
     tags.Clear();
     tags.ReadFile( tagsFileName.c_str() );
 
-    std::string ini_file_path       = wstrtostr(confFilePath.c_str());
+    std::string ini_file_path       = wstrtostr( confFilePath.c_str() );
     std::string ini_file_section    = "general";
 
     //+@TonyM: Reads allowedChars value from config file on each config refresh
@@ -358,7 +360,7 @@ void refreshINIMap()
     _refreshINIFiles();
     MessageBox( nppData._nppHandle,
                 _T( "QuickText.ini and QuickText.conf.ini files reloaded!" ),
-                NPP_PLUGIN_NAME , MB_OK | MB_ICONINFORMATION );
+                NPP_PLUGIN_NAME, MB_OK | MB_ICONINFORMATION );
 }
 
 void openConfigFile()
@@ -379,20 +381,25 @@ void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
     // Get line break chars
     //+@TonyM: incorrect newline detection
     char newline[3] = "\r\n";
+
     if ( doc )
     {
         HWND scintilla = getCurrentHScintilla();
-        int mode = static_cast<int>(SendMessage(scintilla, SCI_GETEOLMODE, 0, 0));
-        switch (mode)
+        int mode = static_cast<int>( SendMessage( scintilla, SCI_GETEOLMODE, 0,
+                                     0 ) );
+
+        switch ( mode )
         {
             case SC_EOL_CRLF:
-                strcpy(newline, "\r\n");
+                strcpy( newline, "\r\n" );
                 break;
+
             case SC_EOL_CR:
-                strcpy(newline, "\r");
+                strcpy( newline, "\r" );
                 break;
+
             case SC_EOL_LF:
-                strcpy(newline, "\n");
+                strcpy( newline, "\n" );
                 break;
         }
     }
@@ -520,7 +527,7 @@ void QuickText()
     //+@TonyM: to popup autocompletion list without first letter
     //+MVINCENT: we want at least 1 letter - maybe an option for 0?
     //+MVINCENT: don't think we can restore TAB hotkey with 0 length autoComplete
-    if (strlen(tag) == 0 && !cQuickText.editing)
+    if ( strlen( tag ) == 0 && !cQuickText.editing )
     {
         // if using hotkey with NOTHING before it don't autocomplete
         restoreKeyStroke( curPos, scintilla );
@@ -1020,29 +1027,41 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 // if tag doesn't exist, a tab should be outputted
 bool restoreKeyStroke( int cursorPos, HWND &scintilla )
 {
-/*
-    if ( funcItems[0]._pShKey->_isAlt == false &&
-            funcItems[0]._pShKey->_isCtrl == false &&
-            funcItems[0]._pShKey->_isShift == false &&
-            funcItems[0]._pShKey->_key == VK_TAB
-       )
-    {
-*/
-// TODO:2019-03-25:MVINCENT:how to see if Tab is hotkey then send it if we're here
-        // restoring original selection
-        SendMessage( scintilla, SCI_SETCURRENTPOS, cursorPos, 0 );
-        SendMessage( scintilla, SCI_SETSELECTIONSTART, cursorPos, ( LPARAM )true );
-        SendMessage( scintilla, SCI_SETSELECTIONEND, cursorPos, ( LPARAM )true );
+    // restoring original selection
+    SendMessage( scintilla, SCI_SETCURRENTPOS, cursorPos, 0 );
+    SendMessage( scintilla, SCI_SETSELECTIONSTART, cursorPos, ( LPARAM )true );
+    SendMessage( scintilla, SCI_SETSELECTIONEND, cursorPos, ( LPARAM )true );
 
-        //+@TonyM: No tab, because I'll use ctr+enter (add key shortcut detection)
-        //+@TonyM: Apparently there is: funcItems[0]._pShKey->_key == VK_TAB
-        //+@TonyM: But doesn't work correctly
-        //-@TonyM: SendMessage(scintilla,SCI_TAB,0,0);
-/*
-        return true;
+    // Get current shortcut key (no modifiers necessary)
+    ShortcutKey sk;
+    SendMessage( nppData._nppHandle, NPPM_GETSHORTCUTBYCMDID,
+                 ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
+
+    CHAR buf[101];    // Because N++ allows 99 as max tab-to-space conversion
+    if ( sk._key == VK_TAB )
+    {
+        bool useTabs = ::SendMessage( scintilla, SCI_GETUSETABS, 0, 0 );
+        if ( useTabs )
+        {
+            sprintf( buf, "%c", sk._key );
+            ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
+        }
+        else
+        {
+            int tabSpace = ::SendMessage( scintilla, SCI_GETTABWIDTH, 0, 0 );
+            for (int i = 0; ((i < tabSpace) && (i<100)); i++)
+                buf[i] = ' ';
+            buf[tabSpace] = '\0';
+            ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
+        }
     }
-*/
-    return false;
+    else
+    {
+        sprintf( buf, "%c", sk._key );
+        ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
+    }
+
+    return true;
 }
 
 void SmartEdit()
