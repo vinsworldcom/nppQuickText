@@ -1,4 +1,4 @@
-    QuickText - Quick editing tags for Notepad++
+﻿    QuickText - Quick editing tags for Notepad++
     Copyright (C) 2006  João Moreno (alph.pt@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
@@ -61,12 +61,13 @@ INSTALLATION
         (plugins/QuickText/)
 
     NOTE:  The original version put config files in weird places and with
-           no updated since the Notepad++ 7.6 new plugins architecture, it's
+           no updates since the Notepad++ 7.6 new plugins architecture, it's
            gotten worse.  This version corrects this.  You'll need to put
-           the following files in their respective directory locations:
+           the following files (or your existing versions) in their 
+           respective directory locations:
 
-           QuickText.conf.ini = NPP_INSTALL_DIR/plugins/Config
-           QuickText.ini      = NPP_INSTALL_DIR/plugins/QuickText
+       Config/QuickText.conf.default.ini = NPP_INSTALL_DIR/plugins/Config
+       Config/QuickText.default.ini      = NPP_INSTALL_DIR/plugins/QuickText
 
 USAGE
 
@@ -158,4 +159,4 @@ LANGUAGE CODES
 48  CMAKE
 49  YAML
 50  EXTERNAL
-51  GLOBAL
+255 GLOBAL
