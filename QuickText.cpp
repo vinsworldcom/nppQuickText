@@ -927,6 +927,11 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             //language = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL,0,0);
                             language = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
+                            //+@VinsWorldcom: to treat number 255 from QuickText.ini as GLOBAL group.
+                            // https://github.com/vinsworldcom/nppQuickText/issues/10
+                            if ( language == ( lang_menu.size() - 1 ) )
+                                language = 255;
+
                             // get substitution text
                             SendMessageA( ConfigWin.text, WM_GETTEXT, ( WPARAM ) textLength,
                                           ( LPARAM ) substitutionTxt_ptr );
