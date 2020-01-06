@@ -607,6 +607,8 @@ void QuickText()
         SendMessage( scintilla, SCI_REPLACESEL, 0,
                      ( LPARAM )cQuickText.text.c_str() );
 
+        SendMessage( scintilla, SCI_AUTOCCANCEL, 0, 0 );
+
         cQuickText.editing = true;
 
         cQuickText.cHotSpot = NEW_HOTSPOT;
@@ -1045,20 +1047,22 @@ bool restoreKeyStroke( int cursorPos, HWND &scintilla )
     CHAR buf[101];    // Because N++ allows 99 as max tab-to-space conversion
     if ( sk._key == VK_TAB )
     {
-        bool useTabs = ::SendMessage( scintilla, SCI_GETUSETABS, 0, 0 );
-        if ( useTabs )
-        {
-            sprintf( buf, "%c", sk._key );
-            ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
-        }
-        else
-        {
-            int tabSpace = ::SendMessage( scintilla, SCI_GETTABWIDTH, 0, 0 );
-            for (int i = 0; ((i < tabSpace) && (i<100)); i++)
-                buf[i] = ' ';
-            buf[tabSpace] = '\0';
-            ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
-        }
+        SendMessage( scintilla, SCI_TAB, 0, 0 );
+
+        // bool useTabs = ::SendMessage( scintilla, SCI_GETUSETABS, 0, 0 );
+        // if ( useTabs )
+        // {
+            // sprintf( buf, "%c", sk._key );
+            // ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
+        // }
+        // else
+        // {
+            // int tabSpace = ( int )::SendMessage( scintilla, SCI_GETTABWIDTH, 0, 0 );
+            // for (int i = 0; ((i < tabSpace) && (i<100)); i++)
+                // buf[i] = ' ';
+            // buf[tabSpace] = '\0';
+            // ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
+        // }
     }
     else
     {
