@@ -1010,6 +1010,12 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             //lang = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL, 0, 0);
                             lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
+                            //+@VinsWorldcom: to treat number 255 from QuickText.ini as GLOBAL group.
+                            // missed on https://github.com/vinsworldcom/nppQuickText/issues/10
+                            // reported in https://github.com/vinsworldcom/nppQuickText/issues/13
+                            if ( lang == ( lang_menu.size() - 1 ) )
+                                lang = 255;
+
                             msg = "Are you sure you want to delete the tag ";
                             msg.append( tagname );
                             msg.push_back( '?' );
