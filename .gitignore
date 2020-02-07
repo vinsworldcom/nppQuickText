@@ -9,3 +9,5 @@ tags
 *.ipdb
 *.user
 *.zip
+bin/*
+bin64/*
