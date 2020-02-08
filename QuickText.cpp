@@ -769,7 +769,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     if ( exiting == TRUE )
                     {
                         tags = tags_replica; // Save changes
-                        tags.WriteFile( tagsFileName.c_str() );
+                        tags.WriteFile( tagsFileName.c_str(), lang_menu );
                         EndDialog( hwndDlg, wParam );
                         return TRUE;
                     }

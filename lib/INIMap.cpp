@@ -138,7 +138,7 @@ bool INIMap::ReadFile ( const TCHAR *filename )
     return true;
 }
 
-bool INIMap::WriteFile ( const TCHAR *filename ) const
+bool INIMap::WriteFile ( const TCHAR *filename, vector<string> lang_menu) const
 {
     if ( !filename || !filename[0] )
         return false;
@@ -155,10 +155,16 @@ bool INIMap::WriteFile ( const TCHAR *filename ) const
             continue;
 
         f << '[' << i->first << ']' << endl;
+        int lang = std::stoi( i->first );
+        if ( lang == 255 )
+            lang = ( int ) lang_menu.size() - 1;
+
+        f << "LANGUAGE_NAME=" << lang_menu[lang] << endl;
 
         for ( keymap::const_iterator j = i->second.begin(); j != i->second.end();
                 j++ )
             f << j->first << '=' << j->second << endl;
+        f << endl;
     }
 
     return true;
