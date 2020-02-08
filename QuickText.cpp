@@ -875,11 +875,22 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             break;
                         }
                     }
-
                     return TRUE;
                 }
 
                 case IDTEXT:
+                {
+                    switch ( HIWORD( wParam ) )
+                    {
+                        case EN_CHANGE:
+                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify [M]" );
+                            ConfigWin.changed = true;
+                            break;
+                    }
+
+                    return TRUE;
+                }
+                
                 case IDTAGNAME:
                 {
                     switch ( HIWORD( wParam ) )
@@ -887,6 +898,12 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         case EN_CHANGE:
                             SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify [M]" );
                             ConfigWin.changed = true;
+                            break;
+
+                        case EN_SETFOCUS:
+                            SendMessage( ConfigWin.tag, LB_SETCURSEL , ( WPARAM ) -1, ( LPARAM ) NULL );
+                            SendMessageA( ConfigWin.tagname, WM_SETTEXT, 0, ( LPARAM ) "" );
+                            SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) "" );
                             break;
                     }
 
