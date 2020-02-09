@@ -86,7 +86,7 @@ bool INIMap::ReadFile ( const TCHAR *filename )
         //     the noComment is useful to not match the LANGUAGE_NAME prefix
         //     which can add documentation / comments to the INI file
 //      regex tagAndSubstitutionTextMatch("([^=]+)=([\\S]+)"); // match (a)=(<a> </a>)
-        regex noComment( "^LANGUAGE_" ); // match "comments"
+        regex noComment( "^#LANGUAGE_NAME" ); // match "comments"
 
         // e.g. [1]
         // parsing tag number
@@ -159,7 +159,7 @@ bool INIMap::WriteFile ( const TCHAR *filename, vector<string> lang_menu) const
         if ( lang == 255 )
             lang = ( int ) lang_menu.size() - 1;
 
-        f << "LANGUAGE_NAME=" << lang_menu[lang] << endl;
+        f << "#LANGUAGE_NAME=" << lang_menu[lang] << endl;
 
         for ( keymap::const_iterator j = i->second.begin(); j != i->second.end();
                 j++ )
