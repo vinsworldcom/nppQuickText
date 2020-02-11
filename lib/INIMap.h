@@ -45,7 +45,7 @@ class INIMap
         INIMap ();
         virtual ~INIMap ();
         virtual bool ReadFile ( const TCHAR *filename );
-        virtual bool WriteFile ( const TCHAR *filename ) const;
+        virtual bool WriteFile ( const TCHAR *filename, vector<string> lang_menu ) const;
         virtual keymap &operator[]( cstring &section );
         virtual keymap &operator[]( const char *section );
         virtual bool Exists( cstring &section ) const;

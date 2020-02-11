@@ -34,18 +34,21 @@ const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
 //+@TonyM: nbFunc = 2 -> nbFunc = 5;
 const int nbFunc = 5; // number of functions
 const std::string
-LANGUAGES ( "TEXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,ASCII,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,COBOL,GUI4CLI,D,POWERSHELL,R,JSP,COFFEESCRIPT,JSON,JAVASCRIPT,FORTRAN_77,BAANC,SREC,IHEX,TEHEX,SWIFT,ASN1,AVS,BLITZBASIC,PUREBASIC,FREEBASIC,CSOUND,ERLANG,ESCRIPT,FORTH,LATEX,MMIXAL,NIMROD,NNCRONTAB,OSCRIPT,REBOL,REGISTRY,RUST,SPICE,TXT2TAGS,VISUALPROLOG,EXTERNAL,GLOBAL" );
+LANGUAGES ( "TEXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,ASCII,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,COBOL,GUI4CLI,D,POWERSHELL,R,JSP,COFFEESCRIPT,JSON,JAVASCRIPT,FORTRAN_77,BAANC,SREC,IHEX,TEHEX,SWIFT,ASN1,AVS,BLITZBASIC,PUREBASIC,FREEBASIC,CSOUND,ERLANG,ESCRIPT,FORTH,LATEX,MMIXAL,NIMROD,NNCRONTAB,OSCRIPT,REBOL,REGISTRY,RUST,SPICE,TXT2TAGS,VISUALPROLOG,EXTERNAL" );
 
 const TCHAR confFileName[] = TEXT( "QuickText.conf.ini" );
 const TCHAR iniFileName[]  = TEXT( "QuickText.ini" );
 basic_string<TCHAR> confFilePath;
+const char sectionName[]        = "General";
+const char iniKeyAllowedChars[] = "allowedChars";
+const char iniKeyLanguages[]    = "lang_menu";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-";
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-#";
 HFONT verdanaFont = CreateFont ( 15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
                                  ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
                                  DEFAULT_PITCH | FF_SWISS, _T( "Verdana" ) );
@@ -60,6 +63,8 @@ vector<string> lang_menu( 256 );
 //+@TonyM: Unused - GLOBAL group has number "255" now.
 // int IDM_LANG_GLOBAL = 51; // sizeof(LangType) + 1
 
+std::string wstrtostr( const std::wstring & );
+
 void commandMenuCleanUp()
 {
     // Don't forget to deallocate your shortcut here
@@ -73,7 +78,12 @@ void pluginInit( HANDLE /* hModule */ )
 
 void pluginCleanUp()
 {
+    std::string ini_file_path = wstrtostr( confFilePath.c_str() );
 
+    ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars,
+                                 allowedChars.c_str(), ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniKeyLanguages,
+                                 LANGUAGES.c_str(), ini_file_path.c_str() );
 }
 
 // *** Main
@@ -318,28 +328,30 @@ void _refreshINIFiles()
     tags.ReadFile( tagsFileName.c_str() );
 
     std::string ini_file_path       = wstrtostr( confFilePath.c_str() );
-    std::string ini_file_section    = "general";
+    std::string ini_file_section    = sectionName;
 
     //+@TonyM: Reads allowedChars value from config file on each config refresh
-    std::string ini_allowedChars = CIniFile::GetValue( "allowedChars",
+    std::string ini_allowedChars = CIniFile::GetValue( iniKeyAllowedChars,
                                    ini_file_section, ini_file_path );
 
     if ( !ini_allowedChars.empty() )
         allowedChars = ini_allowedChars;
 
-    ;
-
     //+@TonyM: Reads lang_menu value from config file on each config refresh
-    std::string ini_lang_menu = CIniFile::GetValue( "lang_menu",
+    std::string ini_lang_menu = CIniFile::GetValue( iniKeyLanguages,
                                 ini_file_section, ini_file_path );
 
-    if ( ini_lang_menu.empty() && lang_menu.empty() )
+    // if ( ini_lang_menu.empty() && lang_menu.empty() )
+    if ( ini_lang_menu.empty() )
+    {
         lang_menu = QTString::vexplode( ",", LANGUAGES, false );
-    else if ( !ini_lang_menu.empty() )
+    }
+    // else if ( !ini_lang_menu.empty() )
+    else
     {
         lang_menu = QTString::vexplode( ",", ini_lang_menu, true );
-        lang_menu.push_back( "GLOBAL" );
-    };
+    }
+    lang_menu.push_back( "GLOBAL" );
 
     //+#DEBUG
     /*
@@ -757,7 +769,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     if ( exiting == TRUE )
                     {
                         tags = tags_replica; // Save changes
-                        tags.WriteFile( tagsFileName.c_str() );
+                        tags.WriteFile( tagsFileName.c_str(), lang_menu );
                         EndDialog( hwndDlg, wParam );
                         return TRUE;
                     }
@@ -863,11 +875,22 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             break;
                         }
                     }
-
                     return TRUE;
                 }
 
                 case IDTEXT:
+                {
+                    switch ( HIWORD( wParam ) )
+                    {
+                        case EN_CHANGE:
+                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify [M]" );
+                            ConfigWin.changed = true;
+                            break;
+                    }
+
+                    return TRUE;
+                }
+                
                 case IDTAGNAME:
                 {
                     switch ( HIWORD( wParam ) )
@@ -875,6 +898,12 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         case EN_CHANGE:
                             SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify [M]" );
                             ConfigWin.changed = true;
+                            break;
+
+                        case EN_SETFOCUS:
+                            SendMessage( ConfigWin.tag, LB_SETCURSEL , ( WPARAM ) -1, ( LPARAM ) NULL );
+                            SendMessageA( ConfigWin.tagname, WM_SETTEXT, 0, ( LPARAM ) "" );
+                            SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) "" );
                             break;
                     }
 
@@ -997,6 +1026,12 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             // Fetch the lang
                             //lang = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL, 0, 0);
                             lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
+
+                            //+@VinsWorldcom: to treat number 255 from QuickText.ini as GLOBAL group.
+                            // missed on https://github.com/vinsworldcom/nppQuickText/issues/10
+                            // reported in https://github.com/vinsworldcom/nppQuickText/issues/13
+                            if ( lang == ( lang_menu.size() - 1 ) )
+                                lang = 255;
 
                             msg = "Are you sure you want to delete the tag ";
                             msg.append( tagname );
