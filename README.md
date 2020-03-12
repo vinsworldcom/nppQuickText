@@ -36,16 +36,24 @@ multi field inputs. It's similar to Tab Triggers in TextMate.
 I compiled with MS Visual Studio Community 2017 and this seems to work OK.
 
 For 32-bit:
+
     [x86 Native Tools Command Prompt for VS 2017]
+
+```
     C:\> set Configuration=Release
     C:\> set Platform=x86
     C:\> msbuild
+```
 
 For 64-bit:
+
     [x64 Native Tools Command Prompt for VS 2017]
+
+```
     C:\> set Configuration=Release
     C:\> set Platform=x64
     C:\> msbuild
+```
 
 ## Installation
 
@@ -76,10 +84,11 @@ no valid expansion for the text before it, the Tag insertion hotkey
 character is inserted.  For example, using "Ctrl+Enter" as the key with
 no valid expansion just inserts a newline (as if Enter key press).
 
-**NOTE:**  Tab can now be used again, Ctrl+Enter still default.  If Tab is
-           used and no valid tag is found as described above, we check to 
-           see if N++ is using Tab-to-Space conversion and if so, insert 
-           the appropriate number of spaces instead of inserting the Tab.
+Once a Tag is inserted, you can use the Tag insertion hotkey again and 
+again to navigate through the hotspots in the inserted Tag snippet.
+
+**NOTE:**  Tab can now be used again as the Tag insertion hotkey;
+           Ctrl+Enter still default.
 
 ## Customization
 
@@ -91,7 +100,7 @@ To make you're own tags:
 + Then, for the key of the tag, use only lower/upper case and numbers.
 + Special chars:
   + $ hotspots
-  + \$ for writing actual '$'
+  + \\$ for writing actual '$'
   + \n break line.
 
 Or just use the Options GUI.
