@@ -37,7 +37,7 @@ const std::string
 LANGUAGES ( "TEXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,ASCII,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,COBOL,GUI4CLI,D,POWERSHELL,R,JSP,COFFEESCRIPT,JSON,JAVASCRIPT,FORTRAN_77,BAANC,SREC,IHEX,TEHEX,SWIFT,ASN1,AVS,BLITZBASIC,PUREBASIC,FREEBASIC,CSOUND,ERLANG,ESCRIPT,FORTH,LATEX,MMIXAL,NIMROD,NNCRONTAB,OSCRIPT,REBOL,REGISTRY,RUST,SPICE,TXT2TAGS,VISUALPROLOG,EXTERNAL" );
 
 const TCHAR confFileName[] = TEXT( "QuickText.conf.ini" );
-const TCHAR iniFileName[]  = TEXT( "QuickText.ini" );
+const TCHAR dataFileName[] = TEXT( "QuickText.ini" );
 basic_string<TCHAR> confFilePath;
 const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "allowedChars";
@@ -113,21 +113,13 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall,
 
 void commandMenuInit()
 {
-
-    // ConfigFile path
-    TCHAR temp[256];
-    GetModuleFileName( ( HMODULE )appInstance, temp, sizeof( temp ) );
-    tagsFileName = temp;
-    unsigned int pos;
-    pos = static_cast<unsigned int>( tagsFileName.rfind( _T( "\\" ) ) );
-    tagsFileName.erase( pos );
-    tagsFileName.append( _T( "\\" ) );
-    tagsFileName.append( iniFileName );
-
     // get path of plugin configuration
     TCHAR get_confFilePath[MAX_PATH];
+    TCHAR get_dataFilePath[MAX_PATH];
     ::SendMessage( nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH,
                    ( LPARAM )get_confFilePath );
+    ::SendMessage( nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH,
+                   ( LPARAM )get_dataFilePath );
 
     // if config path doesn't exist, we create it
     if ( PathFileExists( get_confFilePath ) == FALSE )
@@ -135,7 +127,9 @@ void commandMenuInit()
 
     // make your plugin config file full file path name
     PathAppend( get_confFilePath, confFileName );
+    PathAppend( get_dataFilePath, dataFileName );
     confFilePath = get_confFilePath;
+    tagsFileName = get_dataFilePath;
 
     // funcItems setting
     funcItems[0]._pFunc = QuickText;
