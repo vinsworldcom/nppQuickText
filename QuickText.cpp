@@ -24,6 +24,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <intsafe.h>
 #include <shlwapi.h>
 
+#include "Notepad_plus_msgs.h"
+
 #define NEW_HOTSPOT -1
 #define SZ_LANG 32
 #define SZ_TAG 32
@@ -33,15 +35,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
 //+@TonyM: nbFunc = 2 -> nbFunc = 5;
 const int nbFunc = 5; // number of functions
-const std::string
-LANGUAGES ( "TEXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,ASCII,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,COBOL,GUI4CLI,D,POWERSHELL,R,JSP,COFFEESCRIPT,JSON,JAVASCRIPT,FORTRAN_77,BAANC,SREC,IHEX,TEHEX,SWIFT,ASN1,AVS,BLITZBASIC,PUREBASIC,FREEBASIC,CSOUND,ERLANG,ESCRIPT,FORTH,LATEX,MMIXAL,NIMROD,NNCRONTAB,OSCRIPT,REBOL,REGISTRY,RUST,SPICE,TXT2TAGS,VISUALPROLOG,EXTERNAL" );
-
 const TCHAR confFileName[] = TEXT( "QuickText.conf.ini" );
 const TCHAR dataFileName[] = TEXT( "QuickText.ini" );
 basic_string<TCHAR> confFilePath;
 const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "allowedChars";
-const char iniKeyLanguages[]    = "lang_menu";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
@@ -53,15 +51,7 @@ HFONT verdanaFont = CreateFont ( 15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
                                  ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
                                  DEFAULT_PITCH | FF_SWISS, _T( "Verdana" ) );
 //+@TonyM: string lang_menu[] -> vector<string> lang_menu(256) - for dynamic loading from configuration file.
-vector<string> lang_menu( 256 );
-//string lang_menu[] =  {"TXT", "PHP ", "C", "CPP", "CS", "OBJC", "JAVA", "RC","HTML", "XML", "MAKEFILE", "PASCAL", "BATCH", "INI", "NFO", "USER",\
-//                      "ASP", "SQL", "VB", "JS", "CSS", "PERL", "PYTHON", "LUA","TEX", "FORTRAN", "BASH", "FLASH", "NSIS", "TCL", "LISP", "SCHEME",\
-//                      "ASM", "DIFF", "PROPS", "PS", "RUBY", "SMALLTALK", "VHDL", "KIX", "AU3","CAML", "ADA", "VERILOG", "MATLAB", "HASKELL",\
-//                      "INNO", "SEARCHRESULT","CMAKE", "YAML","EXTERNAL","GLOBAL"};
-
-// workaround for language listed in QuickText to match index of LangType
-//+@TonyM: Unused - GLOBAL group has number "255" now.
-// int IDM_LANG_GLOBAL = 51; // sizeof(LangType) + 1
+vector<string> lang_menu;
 
 std::string wstrtostr( const std::wstring & );
 
@@ -82,8 +72,6 @@ void pluginCleanUp()
 
     ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars,
                                  allowedChars.c_str(), ini_file_path.c_str() );
-    ::WritePrivateProfileStringA( sectionName, iniKeyLanguages,
-                                 LANGUAGES.c_str(), ini_file_path.c_str() );
 }
 
 // *** Main
@@ -316,8 +304,8 @@ void _refreshINIFiles()
     tags.Clear();
     tags.ReadFile( tagsFileName.c_str() );
 
-    std::string ini_file_path       = wstrtostr( confFilePath.c_str() );
-    std::string ini_file_section    = sectionName;
+    std::string ini_file_path    = wstrtostr( confFilePath.c_str() );
+    std::string ini_file_section = sectionName;
 
     //+@TonyM: Reads allowedChars value from config file on each config refresh
     std::string ini_allowedChars = CIniFile::GetValue( iniKeyAllowedChars,
@@ -326,19 +314,12 @@ void _refreshINIFiles()
     if ( !ini_allowedChars.empty() )
         allowedChars = ini_allowedChars;
 
-    //+@TonyM: Reads lang_menu value from config file on each config refresh
-    std::string ini_lang_menu = CIniFile::GetValue( iniKeyLanguages,
-                                ini_file_section, ini_file_path );
-
-    // if ( ini_lang_menu.empty() && lang_menu.empty() )
-    if ( ini_lang_menu.empty() )
+    lang_menu.clear();
+    for ( int i = 0; i <= L_EXTERNAL; i++ )
     {
-        lang_menu = QTString::vexplode( ",", LANGUAGES, false );
-    }
-    // else if ( !ini_lang_menu.empty() )
-    else
-    {
-        lang_menu = QTString::vexplode( ",", ini_lang_menu, true );
+        TCHAR langName[MAX_PATH];
+        SendMessage( nppData._nppHandle, NPPM_GETLANGUAGENAME, i, ( LPARAM ) langName );
+        lang_menu.push_back( wstrtostr( langName ));
     }
     lang_menu.push_back( "GLOBAL" );
 
@@ -353,7 +334,6 @@ void _refreshINIFiles()
     */
     //-#DEBUG
 }
-
 
 // Clears and loads again the INI file
 void refreshINIMap()
