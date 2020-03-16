@@ -135,11 +135,6 @@ void commandMenuInit()
     funcItems[0]._pFunc = QuickText;
     lstrcpy( funcItems[0]._itemName, _T( "&Replace Tag" ) );
     funcItems[0]._init2Check = false;
-    funcItems[0]._pShKey = new ShortcutKey;
-    funcItems[0]._pShKey->_isAlt = false;
-    funcItems[0]._pShKey->_isCtrl = true;
-    funcItems[0]._pShKey->_isShift = false;
-    funcItems[0]._pShKey->_key = VK_RETURN;
 
     funcItems[1]._pFunc = loadConfig;
     lstrcpy( funcItems[1]._itemName, _T( "&Options..." ) );
