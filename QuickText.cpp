@@ -47,9 +47,6 @@ FuncItem funcItems[nbFunc];
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-#";
-HFONT verdanaFont = CreateFont ( 15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
-                                 ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-                                 DEFAULT_PITCH | FF_SWISS, _T( "Verdana" ) );
 //+@TonyM: string lang_menu[] -> vector<string> lang_menu(256) - for dynamic loading from configuration file.
 vector<string> lang_menu;
 
