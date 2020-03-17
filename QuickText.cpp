@@ -35,8 +35,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
 //+@TonyM: nbFunc = 2 -> nbFunc = 5;
 const int nbFunc = 5; // number of functions
-const TCHAR confFileName[] = TEXT( "QuickText.conf.ini" );
-const TCHAR dataFileName[] = TEXT( "QuickText.ini" );
+const TCHAR confFileName[]    = TEXT( "QuickText.conf.ini" );
+const TCHAR dataFileName[]    = TEXT( "QuickText.ini" );
+const TCHAR dataFileDefault[] = TEXT( "QuickText.default.ini" );
 basic_string<TCHAR> confFilePath;
 const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "allowedChars";
@@ -115,6 +116,26 @@ void commandMenuInit()
     PathAppend( get_dataFilePath, dataFileName );
     confFilePath = get_confFilePath;
     tagsFileName = get_dataFilePath;
+
+    // Move data file to plugins/config if not there
+    if ( ! PathFileExists(tagsFileName.c_str() ) )
+    {
+        TCHAR temp[256];
+        basic_string<TCHAR> defaultDbTile;
+
+        GetModuleFileName( ( HMODULE )appInstance, temp, sizeof( temp ) );
+        defaultDbTile = temp;
+        unsigned int pos;
+        pos = static_cast<unsigned int>( defaultDbTile.rfind( _T( "\\" ) ) );
+        defaultDbTile.erase( pos );
+        defaultDbTile.append( _T( "\\" ) );
+        defaultDbTile.append( dataFileDefault );
+
+        if ( PathFileExists( defaultDbTile.c_str() ) )
+        {
+        	// // TODO:2020-03-17:MVINCENT:copy file
+        }
+    }
 
     // funcItems setting
     funcItems[0]._pFunc = QuickText;
