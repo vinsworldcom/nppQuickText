@@ -272,18 +272,6 @@ HWND &getCurrentHScintilla()
 }
 
 
-// Checks if a string is a valid QuickText key
-bool isValidKey( const char *key )
-{
-    string skey = key;
-
-    if ( skey.find_first_not_of( allowedChars ) != static_cast<unsigned>
-            ( string::npos ) )
-        return false;
-
-    return true;
-}
-
 std::string wstrtostr( const std::wstring &wstr )
 {
     // Convert a Unicode string to an ASCII string
@@ -1075,9 +1063,4 @@ bool restoreKeyStroke( int cursorPos, HWND &scintilla )
     }
 
     return true;
-}
-
-void SmartEdit()
-{
-    return;
 }
