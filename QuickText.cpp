@@ -326,7 +326,8 @@ void _refreshINIFiles()
         SendMessage( nppData._nppHandle, NPPM_GETLANGUAGENAME, i, ( LPARAM ) langName );
         lang_menu.push_back( wstrtostr( langName ));
         i++;
-    } while ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 );
+    } while ( ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 ) 
+           && ( i < 255 ) );
     lang_menu.push_back( "GLOBAL" );
 
     //+#DEBUG
