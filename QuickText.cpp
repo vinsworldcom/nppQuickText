@@ -24,8 +24,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <intsafe.h>
 #include <shlwapi.h>
 
-#include "Notepad_plus_msgs.h"
-
 #define NEW_HOTSPOT -1
 #define SZ_LANG 32
 #define SZ_TAG 32
@@ -47,7 +45,7 @@ FuncItem funcItems[nbFunc];
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-#";
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-";
 //+@TonyM: string lang_menu[] -> vector<string> lang_menu(256) - for dynamic loading from configuration file.
 vector<string> lang_menu;
 
@@ -320,13 +318,15 @@ void _refreshINIFiles()
     if ( !ini_allowedChars.empty() )
         allowedChars = ini_allowedChars;
 
+    int i = 0;
+    TCHAR langName[MAX_PATH];
     lang_menu.clear();
-    for ( int i = 0; i <= L_EXTERNAL; i++ )
+    do
     {
-        TCHAR langName[MAX_PATH];
         SendMessage( nppData._nppHandle, NPPM_GETLANGUAGENAME, i, ( LPARAM ) langName );
         lang_menu.push_back( wstrtostr( langName ));
-    }
+        i++;
+    } while ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 );
     lang_menu.push_back( "GLOBAL" );
 
     //+#DEBUG

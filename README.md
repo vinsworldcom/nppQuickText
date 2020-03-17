@@ -136,7 +136,7 @@ LANGUAGE CODES
 16  ASP
 17  SQL
 18  VB
-19  JS
+19  JS    # Do not use for JavaScript, use 58 instead
 20  CSS
 21  PERL
 22  PYTHON
