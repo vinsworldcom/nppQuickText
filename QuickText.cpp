@@ -116,7 +116,7 @@ void commandMenuInit()
     tagsFileName = get_dataFilePath;
 
     // Move data file to plugins/config if not there
-    if ( ! PathFileExists(tagsFileName.c_str() ) )
+    if ( ! PathFileExists( tagsFileName.c_str() ) )
     {
         TCHAR temp[256];
         basic_string<TCHAR> defaultDbTile;
@@ -131,7 +131,7 @@ void commandMenuInit()
 
         if ( PathFileExists( defaultDbTile.c_str() ) )
         {
-        	// // TODO:2020-03-17:MVINCENT:copy file
+            MoveFile( defaultDbTile.c_str(), tagsFileName.c_str() );
         }
     }
 
