@@ -2,6 +2,32 @@
 // Microsoft Visual C++ generated include file.
 // Used by QuickText.rc
 //
+#ifndef RESOURCE_H
+#define RESOURCE_H
+
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
+/* VERSION DEFINITIONS */
+#define VER_MAJOR   0
+#define VER_MINOR   1
+#define VER_RELEASE 3
+#define VER_BUILD   3
+#define VER_STRING  STR(VER_MAJOR) "." STR(VER_MINOR) "." STR(VER_RELEASE) "." STR(VER_BUILD)
+
+#define FILE_DESCRIPTION  "QuickText, plugin for Notepad++"
+#define INTERNAL_NAME	  "QuickText"
+
+#define COMPANY_NAME	  ""
+#define FILE_VERSION	  VER_STRING
+#define LEGAL_COPYRIGHT	  "Copywright (c) 2006 Joao Moreno"
+#define LEGAL_TRADEMARKS  ""
+#define ORIGINAL_FILENAME "QuickText.dll"
+#define PRODUCT_NAME	  "QuickText"
+#define PRODUCT_VERSION	  VER_STRING
+
+/* ADDITIONAL DEFINITIONS */
+
 #define IDD_DLGCONFIG                   101
 #define IDLANG                          1002
 #define IDTEXT                          1003
@@ -24,4 +50,6 @@
         #define _APS_NEXT_CONTROL_VALUE         1019
         #define _APS_NEXT_SYMED_VALUE           101
     #endif
+#endif
+
 #endif
