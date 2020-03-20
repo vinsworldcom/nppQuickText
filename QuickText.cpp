@@ -131,7 +131,7 @@ void commandMenuInit()
 
         if ( PathFileExists( defaultDbTile.c_str() ) )
         {
-            MoveFile( defaultDbTile.c_str(), tagsFileName.c_str() );
+            CopyFile( defaultDbTile.c_str(), tagsFileName.c_str(), true );
         }
     }
 
