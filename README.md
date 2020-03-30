@@ -71,8 +71,8 @@ to the Notepad++ plugins folder:
            the following files (or your existing versions) in their 
            respective directory locations:
 
-    Config/QuickText.conf.default.ini = NPP_INSTALL_DIR/plugins/Config
-    Config/QuickText.default.ini      = NPP_INSTALL_DIR/plugins/QuickText
+    Config/QuickText.conf.default.ini = NPP_INSTALL_DIR/plugins/Config/QuickText.conf.ini
+    Config/QuickText.default.ini      = NPP_INSTALL_DIR/plugins/Config/QuickText.ini
 
 ## Usage
 
@@ -81,14 +81,14 @@ Notepad++ document.
 
 If the Tag insertion hotkey is used and there is no text before it or
 no valid expansion for the text before it, the Tag insertion hotkey
-character is inserted.  For example, using "Ctrl+Enter" as the key with
-no valid expansion just inserts a newline (as if Enter key press).
+character is inserted.  For example, using "Tab" as the key with
+no valid expansion just inserts a tab (as if Tab key press).
 
 Once a Tag is inserted, you can use the Tag insertion hotkey again and 
 again to navigate through the hotspots in the inserted Tag snippet.
 
-**NOTE:**  Tab can now be used again as the Tag insertion hotkey;
-           Ctrl+Enter still default.
+**NOTE:**  Tab can now be used again as the Tag insertion hotkey.
+           There is no default.
 
 ## Customization
 
@@ -136,7 +136,7 @@ LANGUAGE CODES
 16  ASP
 17  SQL
 18  VB
-19  JS
+19  JS    # Do not use for JavaScript, use 58 instead
 20  CSS
 21  PERL
 22  PYTHON

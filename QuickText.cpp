@@ -33,35 +33,21 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
 //+@TonyM: nbFunc = 2 -> nbFunc = 5;
 const int nbFunc = 5; // number of functions
-const std::string
-LANGUAGES ( "TEXT,PHP,C,CPP,CS,OBJC,JAVA,RC,HTML,XML,MAKEFILE,PASCAL,BATCH,INI,ASCII,USER,ASP,SQL,VB,JS,CSS,PERL,PYTHON,LUA,TEX,FORTRAN,BASH,FLASH,NSIS,TCL,LISP,SCHEME,ASM,DIFF,PROPS,PS,RUBY,SMALLTALK,VHDL,KIX,AU3,CAML,ADA,VERILOG,MATLAB,HASKELL,INNO,SEARCHRESULT,CMAKE,YAML,COBOL,GUI4CLI,D,POWERSHELL,R,JSP,COFFEESCRIPT,JSON,JAVASCRIPT,FORTRAN_77,BAANC,SREC,IHEX,TEHEX,SWIFT,ASN1,AVS,BLITZBASIC,PUREBASIC,FREEBASIC,CSOUND,ERLANG,ESCRIPT,FORTH,LATEX,MMIXAL,NIMROD,NNCRONTAB,OSCRIPT,REBOL,REGISTRY,RUST,SPICE,TXT2TAGS,VISUALPROLOG,EXTERNAL" );
-
-const TCHAR confFileName[] = TEXT( "QuickText.conf.ini" );
-const TCHAR iniFileName[]  = TEXT( "QuickText.ini" );
+const TCHAR confFileName[]    = TEXT( "QuickText.conf.ini" );
+const TCHAR dataFileName[]    = TEXT( "QuickText.ini" );
+const TCHAR dataFileDefault[] = TEXT( "QuickText.default.ini" );
 basic_string<TCHAR> confFilePath;
 const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "allowedChars";
-const char iniKeyLanguages[]    = "lang_menu";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-#";
-HFONT verdanaFont = CreateFont ( 15, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
-                                 ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-                                 DEFAULT_PITCH | FF_SWISS, _T( "Verdana" ) );
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-";
 //+@TonyM: string lang_menu[] -> vector<string> lang_menu(256) - for dynamic loading from configuration file.
-vector<string> lang_menu( 256 );
-//string lang_menu[] =  {"TXT", "PHP ", "C", "CPP", "CS", "OBJC", "JAVA", "RC","HTML", "XML", "MAKEFILE", "PASCAL", "BATCH", "INI", "NFO", "USER",\
-//                      "ASP", "SQL", "VB", "JS", "CSS", "PERL", "PYTHON", "LUA","TEX", "FORTRAN", "BASH", "FLASH", "NSIS", "TCL", "LISP", "SCHEME",\
-//                      "ASM", "DIFF", "PROPS", "PS", "RUBY", "SMALLTALK", "VHDL", "KIX", "AU3","CAML", "ADA", "VERILOG", "MATLAB", "HASKELL",\
-//                      "INNO", "SEARCHRESULT","CMAKE", "YAML","EXTERNAL","GLOBAL"};
-
-// workaround for language listed in QuickText to match index of LangType
-//+@TonyM: Unused - GLOBAL group has number "255" now.
-// int IDM_LANG_GLOBAL = 51; // sizeof(LangType) + 1
+vector<string> lang_menu;
 
 std::string wstrtostr( const std::wstring & );
 
@@ -82,8 +68,6 @@ void pluginCleanUp()
 
     ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars,
                                  allowedChars.c_str(), ini_file_path.c_str() );
-    ::WritePrivateProfileStringA( sectionName, iniKeyLanguages,
-                                 LANGUAGES.c_str(), ini_file_path.c_str() );
 }
 
 // *** Main
@@ -113,21 +97,13 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall,
 
 void commandMenuInit()
 {
-
-    // ConfigFile path
-    TCHAR temp[256];
-    GetModuleFileName( ( HMODULE )appInstance, temp, sizeof( temp ) );
-    tagsFileName = temp;
-    unsigned int pos;
-    pos = static_cast<unsigned int>( tagsFileName.rfind( _T( "\\" ) ) );
-    tagsFileName.erase( pos );
-    tagsFileName.append( _T( "\\" ) );
-    tagsFileName.append( iniFileName );
-
     // get path of plugin configuration
     TCHAR get_confFilePath[MAX_PATH];
+    TCHAR get_dataFilePath[MAX_PATH];
     ::SendMessage( nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH,
                    ( LPARAM )get_confFilePath );
+    ::SendMessage( nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH,
+                   ( LPARAM )get_dataFilePath );
 
     // if config path doesn't exist, we create it
     if ( PathFileExists( get_confFilePath ) == FALSE )
@@ -135,17 +111,34 @@ void commandMenuInit()
 
     // make your plugin config file full file path name
     PathAppend( get_confFilePath, confFileName );
+    PathAppend( get_dataFilePath, dataFileName );
     confFilePath = get_confFilePath;
+    tagsFileName = get_dataFilePath;
+
+    // Move data file to plugins/config if not there
+    if ( ! PathFileExists( tagsFileName.c_str() ) )
+    {
+        TCHAR temp[256];
+        basic_string<TCHAR> defaultDbTile;
+
+        GetModuleFileName( ( HMODULE )appInstance, temp, sizeof( temp ) );
+        defaultDbTile = temp;
+        unsigned int pos;
+        pos = static_cast<unsigned int>( defaultDbTile.rfind( _T( "\\" ) ) );
+        defaultDbTile.erase( pos );
+        defaultDbTile.append( _T( "\\" ) );
+        defaultDbTile.append( dataFileDefault );
+
+        if ( PathFileExists( defaultDbTile.c_str() ) )
+        {
+            CopyFile( defaultDbTile.c_str(), tagsFileName.c_str(), true );
+        }
+    }
 
     // funcItems setting
     funcItems[0]._pFunc = QuickText;
     lstrcpy( funcItems[0]._itemName, _T( "&Replace Tag" ) );
     funcItems[0]._init2Check = false;
-    funcItems[0]._pShKey = new ShortcutKey;
-    funcItems[0]._pShKey->_isAlt = false;
-    funcItems[0]._pShKey->_isCtrl = true;
-    funcItems[0]._pShKey->_isShift = false;
-    funcItems[0]._pShKey->_key = VK_RETURN;
 
     funcItems[1]._pFunc = loadConfig;
     lstrcpy( funcItems[1]._itemName, _T( "&Options..." ) );
@@ -295,18 +288,6 @@ HWND &getCurrentHScintilla()
 }
 
 
-// Checks if a string is a valid QuickText key
-bool isValidKey( const char *key )
-{
-    string skey = key;
-
-    if ( skey.find_first_not_of( allowedChars ) != static_cast<unsigned>
-            ( string::npos ) )
-        return false;
-
-    return true;
-}
-
 std::string wstrtostr( const std::wstring &wstr )
 {
     // Convert a Unicode string to an ASCII string
@@ -327,8 +308,8 @@ void _refreshINIFiles()
     tags.Clear();
     tags.ReadFile( tagsFileName.c_str() );
 
-    std::string ini_file_path       = wstrtostr( confFilePath.c_str() );
-    std::string ini_file_section    = sectionName;
+    std::string ini_file_path    = wstrtostr( confFilePath.c_str() );
+    std::string ini_file_section = sectionName;
 
     //+@TonyM: Reads allowedChars value from config file on each config refresh
     std::string ini_allowedChars = CIniFile::GetValue( iniKeyAllowedChars,
@@ -337,20 +318,16 @@ void _refreshINIFiles()
     if ( !ini_allowedChars.empty() )
         allowedChars = ini_allowedChars;
 
-    //+@TonyM: Reads lang_menu value from config file on each config refresh
-    std::string ini_lang_menu = CIniFile::GetValue( iniKeyLanguages,
-                                ini_file_section, ini_file_path );
-
-    // if ( ini_lang_menu.empty() && lang_menu.empty() )
-    if ( ini_lang_menu.empty() )
+    int i = 0;
+    TCHAR langName[MAX_PATH];
+    lang_menu.clear();
+    do
     {
-        lang_menu = QTString::vexplode( ",", LANGUAGES, false );
-    }
-    // else if ( !ini_lang_menu.empty() )
-    else
-    {
-        lang_menu = QTString::vexplode( ",", ini_lang_menu, true );
-    }
+        SendMessage( nppData._nppHandle, NPPM_GETLANGUAGENAME, i, ( LPARAM ) langName );
+        lang_menu.push_back( wstrtostr( langName ));
+        i++;
+    } while ( ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 ) 
+           && ( i < 255 ) );
     lang_menu.push_back( "GLOBAL" );
 
     //+#DEBUG
@@ -364,7 +341,6 @@ void _refreshINIFiles()
     */
     //-#DEBUG
 }
-
 
 // Clears and loads again the INI file
 void refreshINIMap()
@@ -1106,9 +1082,4 @@ bool restoreKeyStroke( int cursorPos, HWND &scintilla )
     }
 
     return true;
-}
-
-void SmartEdit()
-{
-    return;
 }

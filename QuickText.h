@@ -18,7 +18,6 @@
 //////////////////////////////////////////////////////////////////////////
 
 void QuickText();
-void SmartEdit();
 void _refreshINIFiles();
 void refreshINIMap();
 void openConfigFile();
