@@ -566,7 +566,7 @@ void QuickText()
     // autoComplete mode for tags
     else if ( tagList.size() > 0 )
     {
-        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( '\n' ), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
         SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
 
         // restoring original selection
@@ -583,7 +583,7 @@ void QuickText()
             tagList_ss << *index;
 
             if ( ( index + 1 ) != tagListEnd )
-                tagList_ss << '\n';
+                tagList_ss << ' ';
         }
 
         string newList = tagList_ss.str();
