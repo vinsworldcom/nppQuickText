@@ -35,7 +35,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 // *** Plugin specific variables
 const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
-const int nbFunc = 5; 
+const int nbFunc = 7; 
 
 const TCHAR confFileName[]    = TEXT( "QuickText.conf.ini" );
 const TCHAR dataFileName[]    = TEXT( "QuickText.ini" );
@@ -205,21 +205,29 @@ void commandMenuInit()
     lstrcpy( funcItems[0]._itemName, _T( "&Replace Tag" ) );
     funcItems[0]._init2Check = false;
 
-    funcItems[1]._pFunc = loadConfig;
-    lstrcpy( funcItems[1]._itemName, _T( "&Options..." ) );
+    funcItems[1]._pFunc = NULL;
+    lstrcpy( funcItems[1]._itemName, _T( "-SEPARATOR-" ) );
     funcItems[1]._init2Check = false;
 
-    funcItems[2]._pFunc = refreshINIMap;
-    lstrcpy( funcItems[2]._itemName, _T( "Re&fresh Configuration" ) );
+    funcItems[2]._pFunc = openTagsFile;
+    lstrcpy( funcItems[2]._itemName, _T( "Open &Tags File" ) );
     funcItems[2]._init2Check = false;
 
-    funcItems[3]._pFunc = openTagsFile;
-    lstrcpy( funcItems[3]._itemName, _T( "Open &Tags File" ) );
+    funcItems[3]._pFunc = openConfigFile;
+    lstrcpy( funcItems[3]._itemName, _T( "Open &Config File" ) );
     funcItems[3]._init2Check = false;
 
-    funcItems[4]._pFunc = openConfigFile;
-    lstrcpy( funcItems[4]._itemName, _T( "Open &Config File" ) );
+    funcItems[4]._pFunc = refreshINIMap;
+    lstrcpy( funcItems[4]._itemName, _T( "Re&fresh Configuration" ) );
     funcItems[4]._init2Check = false;
+
+    funcItems[5]._pFunc = NULL;
+    lstrcpy( funcItems[5]._itemName, _T( "-SEPARATOR-" ) );
+    funcItems[5]._init2Check = false;
+
+    funcItems[6]._pFunc = loadConfig;
+    lstrcpy( funcItems[6]._itemName, _T( "&Settings" ) );
+    funcItems[6]._init2Check = false;
 
     Config.indenting = true;
 
