@@ -146,7 +146,6 @@ void commandMenuInit()
     lstrcpy( funcItems[1]._itemName, _T( "&Options..." ) );
     funcItems[1]._init2Check = false;
 
-    //+@TonyM: Added 3 new plugin menu commands
     funcItems[2]._pFunc = refreshINIMap;
     lstrcpy( funcItems[2]._itemName, _T( "Re&fresh Configuration" ) );
     funcItems[2]._init2Check = false;
@@ -206,7 +205,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
                             ( *i ) += notifyCode->length;
 
                     // 2019-03-23:MVINCENT: if current position is at the end
-                    //   of inserted tag text the clear the tag hotspots else
+                    //   of inserted tag text then clear the tag hotspots else
                     //   inserted chars add to the overall length
                     int currpos = static_cast<int>( SendMessage( getCurrentHScintilla(),
                                                     SCI_GETCURRENTPOS, 0, 0 ) );
@@ -331,20 +330,9 @@ void _refreshINIFiles()
     } while ( ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 ) 
            && ( i < 255 ) );
     lang_menu.push_back( "GLOBAL" );
-
-    //+#DEBUG
-    /*
-    stringstream ss;
-    ss << lang_menu.at(1).size();
-    //+@TonyM: message box for config file testing (INI File parsing library)
-    std::wstring stemp = QTString::s2ws(ss.str()); // Temporary buffer is required
-    LPCWSTR result = stemp.c_str();
-    MessageBox(nppData._nppHandle, result, _T("QuickText"), MB_OK | MB_ICONINFORMATION);
-    */
-    //-#DEBUG
 }
 
-// Clears and loads again the INI file
+// Clears and loads the INI file
 void refreshINIMap()
 {
     _refreshINIFiles();
@@ -368,8 +356,6 @@ void openTagsFile()
 // Strip all the line breaks
 void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
 {
-    // Get line break chars
-    //+@TonyM: incorrect newline detection
     char newline[3] = "\r\n";
 
     if ( doc )
@@ -420,8 +406,7 @@ void revStripBreaks( string &str )
     }
 }
 
-// set  cQuickText.text to substitution texts
-// setup hotspots hopping
+// set cQuickText.text to substitution texts, setup hotspots hopping
 void decodeStr( cstring &str, int start, string &indent )
 {
     cQuickText.text = str;
@@ -462,7 +447,6 @@ void decodeStr( cstring &str, int start, string &indent )
     }
 }
 
-// QuickTxt function
 void QuickText()
 {
     HWND scintilla = getCurrentHScintilla();
@@ -484,20 +468,6 @@ void QuickText()
     textSelectionEnd = static_cast<int>( SendMessage( scintilla,
                                          SCI_GETSELECTIONEND, 0, 0 ) );
 
-    // text selected, restore default key behavior
-    //+@TonyM: Not needed if not using the tab shortcut key.
-    //+@TonyM: Explanation: If text is selected and we press the tab key, the tab space shoud appear,
-    //+@TonyM: but if we set another shortcut combo, then it behaves like a tab, which is annoying with placeholders.
-    /*-@TonyM:
-    if(textSelectionEnd != textSelectionStart)
-    {
-        // restoring tab functionality
-        if (funcItems[0]._pShKey->_key == VK_TAB)
-            SendMessage(scintilla,SCI_TAB,0,0);
-
-        return;
-    }
-    */
     // get 'text' location
     curPos = static_cast<int>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
                                             0 ) );
@@ -505,8 +475,6 @@ void QuickText()
                                  curPos, ( LPARAM )true ) );
     endPos = static_cast<int>( SendMessage( scintilla, SCI_WORDENDPOSITION,
                                             curPos, ( LPARAM )true ) );
-
-
 
     // copy 'text' to tag
     SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
@@ -524,13 +492,7 @@ void QuickText()
         return;
     }
 
-//  if (!isValidKey(tag) && !cQuickText.editing) {
-//      MessageBox(nppData._nppHandle, _T("Only alphanumerical characters."), _T("QuickText"), MB_OK | MB_ICONINFORMATION);
-//      return;
-//  }
-
     // get the current langtype
-
     SendMessage( nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0,
                  ( LPARAM )&langtype );
     _itoa( langtype, sLangType, 10 );
@@ -583,15 +545,9 @@ void QuickText()
         // decode key into value
         // tags within Current lang takes priority over Global language
         if ( tagInCurrentLang )
-        {
-            //MessageBox(nppData._nppHandle, _T("current tag"), _T("QuickText"), MB_OK | MB_ICONINFORMATION);
             decodeStr( tags[sLangType][tag], startPos, indent );
-        }
         else if ( tagInGlobalLang )
-        {
-            //MessageBox(nppData._nppHandle, _T("global tag"), _T("QuickText"), MB_OK | MB_ICONINFORMATION);
             decodeStr( tags[sLangTypeGlobal][tag], startPos, indent );
-        }
 
         // replace it in scintilla
         SendMessage( scintilla, SCI_REPLACESEL, 0,
@@ -632,12 +588,8 @@ void QuickText()
 
         string newList = tagList_ss.str();
 
-        // need to build custom ListBox
-
-        //+@TonyM: (WPARAM) 1 -> (WPARAM) strlen(tag)
         SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
                      ( LPARAM )newList.c_str() );
-        //int curSEl =  static_cast<int>(SendMessage(scintilla, SCI_AUTOCGETCURRENT, 0, 0));
     }
     else
         restoreKeyStroke( curPos, scintilla );
@@ -701,18 +653,11 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             ConfigWin.text = GetDlgItem( hwndDlg, IDTEXT );
             ConfigWin.changed = false;
 
-            // LangType contains 51 languages as of now.
-            // dynamic way to grab language names?
-
-            //int numberOfLang = sizeof(lang_menu)/sizeof(string);
             int numberOfLang;
             ULongPtrToInt ( lang_menu.size(), &numberOfLang );
-
-            // adding language to QuickText window
             for ( int i = 0; i < numberOfLang; i++ )
                 SendMessageA( ConfigWin.langCB, CB_INSERTSTRING, ( WPARAM ) - 1,
                               ( LPARAM ) lang_menu.at( i ).c_str() );
-
 
             // highlight current language in Notepad++
             int langIndex = 0;
@@ -723,7 +668,6 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             // ((LBN_SELCHANGE << 16) | ( IDLANG)) <-- message to pass through to IDLANG loop
             DlgConfigProc( hwndDlg, ( UINT ) WM_COMMAND,
                            ( WPARAM )( ( LBN_SELCHANGE << 16 ) | ( IDLANG ) ), 0 );
-
         }
         break;
 
@@ -787,7 +731,6 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             SendMessage( ConfigWin.tag, LB_RESETCONTENT, 0, 0 );
 
                             // Get lang
-                            //lang = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL, 0, 0);
                             lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@TonyM: to treat number 255 from QuickText.ini as GLOBAL group.
@@ -825,7 +768,6 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             EnableWindow( ConfigWin.text, TRUE );
 
                             // Fetch the lang and tag.
-                            //lang = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL, 0, 0);
                             lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@TonyM: to treat number 255 from QuickText.ini as GLOBAL group.
@@ -933,7 +875,6 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                     size_t )textLength ) ) );
 
                             // get language
-                            //language = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL,0,0);
                             language = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@VinsWorldcom: to treat number 255 from QuickText.ini as GLOBAL group.
@@ -1002,12 +943,10 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                           ( LPARAM ) tagname );
 
                             // Fetch the lang
-                            //lang = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL, 0, 0);
                             lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@VinsWorldcom: to treat number 255 from QuickText.ini as GLOBAL group.
-                            // missed on https://github.com/vinsworldcom/nppQuickText/issues/10
-                            // reported in https://github.com/vinsworldcom/nppQuickText/issues/13
+                            // https://github.com/vinsworldcom/nppQuickText/issues/10
                             if ( lang == ( lang_menu.size() - 1 ) )
                                 lang = 255;
 
@@ -1059,24 +998,7 @@ bool restoreKeyStroke( int cursorPos, HWND scintilla )
 
     CHAR buf[101];    // Because N++ allows 99 as max tab-to-space conversion
     if ( sk._key == VK_TAB )
-    {
         SendMessage( scintilla, SCI_TAB, 0, 0 );
-
-        // bool useTabs = ::SendMessage( scintilla, SCI_GETUSETABS, 0, 0 );
-        // if ( useTabs )
-        // {
-            // sprintf( buf, "%c", sk._key );
-            // ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
-        // }
-        // else
-        // {
-            // int tabSpace = ( int )::SendMessage( scintilla, SCI_GETTABWIDTH, 0, 0 );
-            // for (int i = 0; ((i < tabSpace) && (i<100)); i++)
-                // buf[i] = ' ';
-            // buf[tabSpace] = '\0';
-            // ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
-        // }
-    }
     else
     {
         sprintf( buf, "%c", sk._key );
