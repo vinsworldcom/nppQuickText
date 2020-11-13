@@ -53,6 +53,69 @@ std::string allowedChars =
 //+@TonyM: string lang_menu[] -> vector<string> lang_menu(256) - for dynamic loading from configuration file.
 vector<string> lang_menu;
 
+#define REGIMGID 20820
+/* XPM */
+const char *xpmQt[] = {
+    /* columns rows colors chars-per-pixel */
+    "16 16 39 1 ",
+    "  c black",
+    ". c #3A0000",
+    "X c #3A3A00",
+    "o c #00003A",
+    "O c #660000",
+    "+ c #663A00",
+    "@ c #663A3A",
+    "# c #000066",
+    "$ c #003A66",
+    "% c #903A00",
+    "& c #B66600",
+    "* c #90663A",
+    "= c #B6903A",
+    "- c #DB903A",
+    "; c #B69066",
+    ": c #DB9066",
+    "> c #DBB666",
+    ", c #FFB666",
+    "< c #003A90",
+    "1 c #3A6690",
+    "2 c #0066B6",
+    "3 c #3A66B6",
+    "4 c #6666B6",
+    "5 c #3A90DB",
+    "6 c #66B6DB",
+    "7 c #66B6FF",
+    "8 c #9090B6",
+    "9 c #DBB690",
+    "0 c #FFDBB6",
+    "q c #FFFFB6",
+    "w c #90B6DB",
+    "e c #B6DBDB",
+    "r c #90DBFF",
+    "t c #B6FFFF",
+    "y c gray86",
+    "u c #FFFFDB",
+    "i c #DBDBFF",
+    "p c #DBFFFF",
+    "a c white",
+    /* pixels */
+    "aaaa9@  $raaaaaa",
+    "aa0+o6a0O 7aaaaa",
+    "aqO 7aaa- <paaaa",
+    "u% 2aaaa- #taaaa",
+    ",  7aaa-       #",
+    "% #taaa%3i- <p><",
+    "O 2aaaa4 u% 5au8",
+    "O 5aaau% qOoraaa",
+    "% 5aaa- <, #taaa",
+    ", <pu= <p& 2aaaa",
+    "a>.  $waqO 7aaaa",
+    "a0*3aaaa, #taaaa",
+    ":.   1ea- 2aaaaa",
+    "yau;X  0O 5aaaaa",
+    "aaaaaa&    2aaaa",
+    "aaaaaaaaaaaaaaaa"
+};
+
 void commandMenuCleanUp()
 {
     // Don't forget to deallocate your shortcut here
@@ -567,7 +630,9 @@ void QuickText()
     else if ( tagList.size() > 0 )
     {
         SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
         SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
+        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
 
         // restoring original selection
         SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
@@ -581,6 +646,8 @@ void QuickText()
                 index++ )
         {
             tagList_ss << *index;
+            tagList_ss << '?';
+            tagList_ss << REGIMGID;
 
             if ( ( index + 1 ) != tagListEnd )
                 tagList_ss << ' ';
