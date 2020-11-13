@@ -647,7 +647,11 @@ void QuickText()
     }
     // expecting to be hopping through hotspots
     else if ( cQuickText.editing )
+    {
+        cQuickText.autoC = false;
+        cQuickText.autoCtext.clear();
         jump( scintilla );
+    }
     // autoComplete mode for tags
     else if ( tagList.size() > 0 )
     {
