@@ -1,4 +1,6 @@
-#pragma once
+#ifndef INIFILE_H
+#define INIFILE_H
+
 #include <string>
 #include <vector>
 #include <iostream>
@@ -123,3 +125,5 @@ class CIniFile
             }
         };
 };
+
+#endif

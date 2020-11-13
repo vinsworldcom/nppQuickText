@@ -16,23 +16,27 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef QUICKTEXT_H
-    #define QUICKTEXT_H
-    #include "QuickText.h"
-#endif // QUICKTEXT_H
-
+#include <sstream>
+#include <stdlib.h>
 #include <intsafe.h>
 #include <shlwapi.h>
 
+#include "PluginInterface.h"
+#include "menuCmdID.h"
+#include "resource.h"
+#include "QuickText.h"
+
+#include "lib/INIMap.h"
+#include "lib/IniFile.h"
+#include "lib/QTString.h"
+
 #define NEW_HOTSPOT -1
-#define SZ_LANG 32
 #define SZ_TAG 32
-#define SZ_TEXT 512
 
 // *** Plugin specific variables
 const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
-//+@TonyM: nbFunc = 2 -> nbFunc = 5;
-const int nbFunc = 5; // number of functions
+const int nbFunc = 5; 
+
 const TCHAR confFileName[]    = TEXT( "QuickText.conf.ini" );
 const TCHAR dataFileName[]    = TEXT( "QuickText.ini" );
 const TCHAR dataFileDefault[] = TEXT( "QuickText.default.ini" );
@@ -48,8 +52,6 @@ std::string allowedChars =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-";
 //+@TonyM: string lang_menu[] -> vector<string> lang_menu(256) - for dynamic loading from configuration file.
 vector<string> lang_menu;
-
-std::string wstrtostr( const std::wstring & );
 
 void commandMenuCleanUp()
 {
@@ -278,7 +280,7 @@ extern "C" __declspec( dllexport ) BOOL isUnicode()
 
 /* Functions */
 // get Scintilla's Handle
-HWND &getCurrentHScintilla()
+HWND getCurrentHScintilla()
 {
     int currentEdit;
     SendMessage( nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0,
@@ -645,7 +647,7 @@ void QuickText()
 }
 
 // hopping through hotspots
-void jump( HWND &scintilla )
+void jump( HWND scintilla )
 {
     if ( cQuickText.hotSpotsPos.size() != 0 )
     {
@@ -1043,7 +1045,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
     return FALSE;
 }
 // if tag doesn't exist, a tab should be outputted
-bool restoreKeyStroke( int cursorPos, HWND &scintilla )
+bool restoreKeyStroke( int cursorPos, HWND scintilla )
 {
     // restoring original selection
     SendMessage( scintilla, SCI_SETCURRENTPOS, cursorPos, 0 );

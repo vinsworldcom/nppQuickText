@@ -1,5 +1,8 @@
 //+@TonyM
-#pragma once
+
+#ifndef QTSTRING_H
+#define QTSTRING_H
+
 #include <sstream>
 #include <string>
 #include <vector>
@@ -24,3 +27,5 @@ class QTString
         // Convert wide string to string
         static std::string ws2s ( const std::wstring &ws );
 };
+
+#endif
