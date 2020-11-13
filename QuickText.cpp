@@ -318,11 +318,9 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
 
         case SCN_AUTOCSELECTION:
         {
-            if ( cQuickText.autoC )
-            {
-                cQuickText.autoCtext = notifyCode->text;
-                QuickText();
-            }
+            cQuickText.autoCtext = notifyCode->text;
+            cQuickText.autoC = true;
+            QuickText();
         }
         break;
 
@@ -551,7 +549,11 @@ void QuickText()
                                             curPos, ( LPARAM )true ) );
 
     if ( cQuickText.autoC )
-        strcpy( tag , cQuickText.autoCtext.c_str() );
+    {
+        strcpy( tag, cQuickText.autoCtext.c_str() );
+        cQuickText.autoC = false;
+        cQuickText.autoCtext.clear();
+    }
     else
     {
         // copy 'text' to tag
@@ -560,7 +562,7 @@ void QuickText()
         SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
     }
 
-    if ( strlen( tag ) == 0 && !cQuickText.editing && !cQuickText.autoC )
+    if ( strlen( tag ) == 0 && !cQuickText.editing )
     {
         // Get current shortcut key (no modifiers necessary)
         ShortcutKey sk;
@@ -638,20 +640,14 @@ void QuickText()
 
         SendMessage( scintilla, SCI_AUTOCCANCEL, 0, 0 );
 
-        cQuickText.editing   = true;
-        cQuickText.autoC     = false;
-        cQuickText.autoCtext.clear();
+        cQuickText.editing = true;
 
         cQuickText.cHotSpot = NEW_HOTSPOT;
         jump( scintilla );
     }
     // expecting to be hopping through hotspots
     else if ( cQuickText.editing )
-    {
-        cQuickText.autoC = false;
-        cQuickText.autoCtext.clear();
         jump( scintilla );
-    }
     // autoComplete mode for tags
     else if ( tagList.size() > 0 )
     {
@@ -683,8 +679,6 @@ void QuickText()
 
         SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
                      ( LPARAM )newList.c_str() );
-
-        cQuickText.autoC = true;
     }
     else
         restoreKeyStroke( curPos, scintilla );
@@ -712,18 +706,17 @@ void jump( HWND scintilla )
         cQuickText.editing = false;
 }
 
-
-
 // clear settings and etc.
 void clear()
 {
     cQuickText.text = "";
     cQuickText.cHotSpot = NEW_HOTSPOT;
     cQuickText.editing = false;
+    cQuickText.autoC = false;
+    cQuickText.autoCtext.clear();
     cQuickText.hotSpotsPos.clear();
     cQuickText.hotSpotsLen.clear();
 }
-
 
 void loadConfig()
 {
@@ -1082,9 +1075,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 bool restoreKeyStroke( int cursorPos, HWND scintilla )
 {
     // restoring original selection
-    SendMessage( scintilla, SCI_SETCURRENTPOS, cursorPos, 0 );
-    SendMessage( scintilla, SCI_SETSELECTIONSTART, cursorPos, ( LPARAM )true );
-    SendMessage( scintilla, SCI_SETSELECTIONEND, cursorPos, ( LPARAM )true );
+    SendMessage( scintilla, SCI_SETEMPTYSELECTION, cursorPos, 0 );
 
     // Get current shortcut key (no modifiers necessary)
     ShortcutKey sk;
@@ -1092,13 +1083,9 @@ bool restoreKeyStroke( int cursorPos, HWND scintilla )
                  ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
 
     CHAR buf[101];    // Because N++ allows 99 as max tab-to-space conversion
-    if ( sk._key == VK_TAB )
+    if ( ( sk._key == VK_TAB ) &&
+          !sk._isCtrl && !sk._isAlt && !sk._isShift )
         SendMessage( scintilla, SCI_TAB, 0, 0 );
-    else
-    {
-        sprintf( buf, "%c", sk._key );
-        ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
-    }
 
     return true;
 }
