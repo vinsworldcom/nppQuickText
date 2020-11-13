@@ -224,6 +224,7 @@ void commandMenuInit()
     Config.indenting = true;
 
     cQuickText.editing = false;
+    cQuickText.autoC   = false;
     //+@TonyM: refreshINIMap() -> _refreshINIFiles() - to skip displaying
     //+@TonyM: MessageBox with confirmation of INI files reload on the start of Notepad++.
     _refreshINIFiles();
@@ -312,6 +313,16 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
 
             if ( r )
                 clear();
+        }
+        break;
+
+        case SCN_AUTOCSELECTION:
+        {
+            if ( cQuickText.autoC )
+            {
+                cQuickText.autoCtext = notifyCode->text;
+                QuickText();
+            }
         }
         break;
 
@@ -539,12 +550,17 @@ void QuickText()
     endPos = static_cast<int>( SendMessage( scintilla, SCI_WORDENDPOSITION,
                                             curPos, ( LPARAM )true ) );
 
-    // copy 'text' to tag
-    SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
-    SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
-    SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
+    if ( cQuickText.autoC )
+        strcpy( tag , cQuickText.autoCtext.c_str() );
+    else
+    {
+        // copy 'text' to tag
+        SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
+        SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
+        SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
+    }
 
-    if ( strlen( tag ) == 0 && !cQuickText.editing )
+    if ( strlen( tag ) == 0 && !cQuickText.editing && !cQuickText.autoC )
     {
         // Get current shortcut key (no modifiers necessary)
         ShortcutKey sk;
@@ -622,7 +638,9 @@ void QuickText()
 
         SendMessage( scintilla, SCI_AUTOCCANCEL, 0, 0 );
 
-        cQuickText.editing = true;
+        cQuickText.editing   = true;
+        cQuickText.autoC     = false;
+        cQuickText.autoCtext.clear();
 
         cQuickText.cHotSpot = NEW_HOTSPOT;
         jump( scintilla );
@@ -661,6 +679,8 @@ void QuickText()
 
         SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
                      ( LPARAM )newList.c_str() );
+
+        cQuickText.autoC = true;
     }
     else
         restoreKeyStroke( curPos, scintilla );
