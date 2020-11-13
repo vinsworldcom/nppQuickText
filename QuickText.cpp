@@ -891,7 +891,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case EN_CHANGE:
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify [M]" );
+                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "&Modify" );
                             ConfigWin.changed = true;
                             break;
                     }
@@ -904,7 +904,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case EN_CHANGE:
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify [M]" );
+                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "&Add" );
                             ConfigWin.changed = true;
                             break;
 
