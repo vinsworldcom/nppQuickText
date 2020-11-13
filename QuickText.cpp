@@ -544,15 +544,19 @@ void QuickText()
     SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
     SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
 
-    // validate the key
-    //+@TonyM: to popup autocompletion list without first letter
-    //+MVINCENT: we want at least 1 letter - maybe an option for 0?
-    //+MVINCENT: don't think we can restore TAB hotkey with 0 length autoComplete
     if ( strlen( tag ) == 0 && !cQuickText.editing )
     {
-        // if using hotkey with NOTHING before it don't autocomplete
-        restoreKeyStroke( curPos, scintilla );
-        return;
+        // Get current shortcut key (no modifiers necessary)
+        ShortcutKey sk;
+        SendMessage( nppData._nppHandle, NPPM_GETSHORTCUTBYCMDID,
+                    ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
+
+        if (( sk._key == VK_TAB ) || ( sk._key == VK_RETURN ) &&
+              !sk._isCtrl && !sk._isAlt && !sk._isShift )
+        {
+            restoreKeyStroke( curPos, scintilla );
+            return;
+        }
     }
 
     // get the current langtype
