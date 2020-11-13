@@ -16,8 +16,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <sstream>
-#include <stdlib.h>
+#include <windows.h>
+#include <commctrl.h>
 #include <intsafe.h>
 #include <shlwapi.h>
 
@@ -727,7 +727,7 @@ void loadConfig()
 }
 
 BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
-                             LPARAM /* lParam */ )
+                             LPARAM lParam )
 {
     switch ( message )
     {
@@ -740,6 +740,12 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             ConfigWin.tagname = GetDlgItem( hwndDlg, IDTAGNAME );
             ConfigWin.text = GetDlgItem( hwndDlg, IDTEXT );
             ConfigWin.changed = false;
+
+            std::string version;
+            version = "<a>";
+            version += VER_STRING;
+            version += "</a>";
+            SetDlgItemTextA( hwndDlg, IDC_STC_VER, version.c_str() );
 
             int numberOfLang;
             ULongPtrToInt ( lang_menu.size(), &numberOfLang );
@@ -758,6 +764,26 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                            ( WPARAM )( ( LBN_SELCHANGE << 16 ) | ( IDLANG ) ), 0 );
         }
         break;
+
+        case WM_NOTIFY:
+        {
+            switch (((LPNMHDR)lParam)->code)
+            {
+                case NM_CLICK:
+                case NM_RETURN:
+                {
+                    PNMLINK pNMLink = (PNMLINK)lParam;
+                    LITEM   item    = pNMLink->item;
+                    HWND ver = GetDlgItem( hwndDlg, IDC_STC_VER );
+
+                    if ((((LPNMHDR)lParam)->hwndFrom == ver) && (item.iLink == 0))
+                        ShellExecute(hwndDlg, TEXT("open"), TEXT("https://github.com/VinsWorldcom/nppQuickText"), NULL, NULL, SW_SHOWNORMAL);
+
+                    return TRUE;
+                }
+            }
+            break;
+        }
 
         case WM_COMMAND:
             switch ( LOWORD( wParam ) )
@@ -1082,7 +1108,6 @@ bool restoreKeyStroke( int cursorPos, HWND scintilla )
     SendMessage( nppData._nppHandle, NPPM_GETSHORTCUTBYCMDID,
                  ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
 
-    CHAR buf[101];    // Because N++ allows 99 as max tab-to-space conversion
     if ( ( sk._key == VK_TAB ) &&
           !sk._isCtrl && !sk._isAlt && !sk._isShift )
         SendMessage( scintilla, SCI_TAB, 0, 0 );
