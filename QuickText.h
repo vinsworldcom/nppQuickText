@@ -40,8 +40,6 @@ struct
     vector<int> hotSpotsPos;
     vector<int> hotSpotsLen;
     bool editing;
-    bool autoC;
-    string autoCtext;
     /*unsigned*/ int cHotSpot; // Current HotSpot
 } cQuickText; // Current QuickText tag
 

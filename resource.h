@@ -40,6 +40,7 @@
 #define IDSMARTEDIT                     1017
 #define IDC_EDIT1                       1018
 #define IDC_STC_VER                     1019
+#define IDC_CHK_AIA                     1020
 
 // Next default values for new objects
 //

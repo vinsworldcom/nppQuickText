@@ -42,10 +42,13 @@ const TCHAR dataFileName[]    = TEXT( "QuickText.ini" );
 const TCHAR dataFileDefault[] = TEXT( "QuickText.default.ini" );
 basic_string<TCHAR> confFilePath;
 const char sectionName[]        = "General";
-const char iniKeyAllowedChars[] = "allowedChars";
+const char iniKeyAllowedChars[] = "AllowedChars";
+const char iniInsertOnAutoC[]   = "InsertOnAutoC";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
+
+bool g_bInsertOnAutoC = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
@@ -133,6 +136,8 @@ void pluginCleanUp()
 
     ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars,
                                  allowedChars.c_str(), ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniInsertOnAutoC,
+                                 g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
 }
 
 // *** Main
@@ -232,7 +237,6 @@ void commandMenuInit()
     Config.indenting = true;
 
     cQuickText.editing = false;
-    cQuickText.autoC   = false;
     //+@TonyM: refreshINIMap() -> _refreshINIFiles() - to skip displaying
     //+@TonyM: MessageBox with confirmation of INI files reload on the start of Notepad++.
     _refreshINIFiles();
@@ -324,11 +328,10 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
         }
         break;
 
-        case SCN_AUTOCSELECTION:
+        case SCN_AUTOCCOMPLETED:
         {
-            cQuickText.autoCtext = notifyCode->text;
-            cQuickText.autoC = true;
-            QuickText();
+           if ( g_bInsertOnAutoC )
+               QuickText();
         }
         break;
 
@@ -395,9 +398,17 @@ void _refreshINIFiles()
     //+@TonyM: Reads allowedChars value from config file on each config refresh
     std::string ini_allowedChars = CIniFile::GetValue( iniKeyAllowedChars,
                                    ini_file_section, ini_file_path );
-
     if ( !ini_allowedChars.empty() )
         allowedChars = ini_allowedChars;
+
+    std::string autoC = CIniFile::GetValue( iniInsertOnAutoC,
+                                     ini_file_section, ini_file_path );
+    if ( !autoC.empty() )
+    {
+        int val = std::stoi( autoC );
+        if ( val != 0 )
+            g_bInsertOnAutoC = true;
+    }
 
     int i = 0;
     TCHAR langName[MAX_PATH];
@@ -556,19 +567,10 @@ void QuickText()
     endPos = static_cast<int>( SendMessage( scintilla, SCI_WORDENDPOSITION,
                                             curPos, ( LPARAM )true ) );
 
-    if ( cQuickText.autoC )
-    {
-        strcpy( tag, cQuickText.autoCtext.c_str() );
-        cQuickText.autoC = false;
-        cQuickText.autoCtext.clear();
-    }
-    else
-    {
-        // copy 'text' to tag
-        SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
-        SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
-        SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
-    }
+    // copy 'text' to tag
+    SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
+    SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
+    SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
 
     if ( strlen( tag ) == 0 && !cQuickText.editing )
     {
@@ -720,8 +722,6 @@ void clear()
     cQuickText.text = "";
     cQuickText.cHotSpot = NEW_HOTSPOT;
     cQuickText.editing = false;
-    cQuickText.autoC = false;
-    cQuickText.autoCtext.clear();
     cQuickText.hotSpotsPos.clear();
     cQuickText.hotSpotsLen.clear();
 }
@@ -754,6 +754,9 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             version += VER_STRING;
             version += "</a>";
             SetDlgItemTextA( hwndDlg, IDC_STC_VER, version.c_str() );
+
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_SETCHECK,
+                         ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
 
             int numberOfLang;
             ULongPtrToInt ( lang_menu.size(), &numberOfLang );
@@ -832,6 +835,19 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         EndDialog( hwndDlg, wParam );
 
                     return TRUE;
+
+                case IDC_CHK_AIA:
+                {
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ),
+                                                      BM_GETCHECK, 0, 0 );
+
+                    if ( check & BST_CHECKED )
+                        g_bInsertOnAutoC = true;
+                    else
+                        g_bInsertOnAutoC = false;
+
+                    return TRUE;
+                }
 
                 case IDLANG_CB:
 
