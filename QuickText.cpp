@@ -512,6 +512,11 @@ void QuickText()
     char sLangType[3];
     char sLangTypeGlobal[3];
 
+    // cannot handle multiple selections
+    int sels = (int)::SendMessage( scintilla, SCI_GETSELECTIONS, 0, 0 );
+    if (sels > 1)
+      return;
+
     // define 'text' for scintilla
     SendMessage( scintilla, SCI_SETWORDCHARS, 0,
                  ( LPARAM )allowedChars.c_str() );
