@@ -76,8 +76,8 @@ to the Notepad++ plugins folder:
 
 ## Usage
 
-Use the key shortcut to use QuickText tags from within the current
-Notepad++ document.
+Assign a shortcut key to the Plugins => QuickText => Replace Tag menu to 
+use QuickText tags from within the current Notepad++ document.
 
 If the Tag insertion hotkey is used and there is no text before it or
 no valid expansion for the text before it, the Tag insertion hotkey

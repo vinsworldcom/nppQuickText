@@ -1,38 +1,33 @@
-/*
- *  SYSTEM INCLUDES
- */
-#include <sstream>
-#include <stdlib.h>
-#include "resource.h"
-#include "lib/INIMap.h"
-#include "menuCmdID.h"
-#include "PluginInterface.h"
-#include "lib/IniFile.h"
-#include "lib/QTString.h"
-// #include "sqlite3/CppSQLite3.h"
+#ifndef QUICKTEXT_H
+#define QUICKTEXT_H
 
+#include <string>
+#include <vector>
+#include "lib/INIMap.h"
 //////////////////////////////////////////////////////////////////////////
 /*
  *  Prototypes
  */
 //////////////////////////////////////////////////////////////////////////
 
+using namespace std;
+typedef const string cstring;
+
 void QuickText();
+HWND getCurrentHScintilla();
+std::string wstrtostr( const std::wstring & );
 void _refreshINIFiles();
 void refreshINIMap();
 void openConfigFile();
 void openTagsFile();
-void jump( HWND &scintilla );
+void jump( HWND );
 void clear();
 void loadConfig();
-bool restoreKeyStroke( int cursorPos, HWND &scintilla );
-HWND &getCurrentHScintilla();
-void stripBreaks( string &str, bool doc, cstring &indent );
-void revStripBreaks( string &str );
-void decodeStr( cstring &str, int start,
-                string &indent ); // Uses global var cQuickText.
-BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
-                             LPARAM lParam );
+bool restoreKeyStroke( int, HWND );
+void stripBreaks( string &, bool, cstring & );
+void revStripBreaks( string & );
+void decodeStr( cstring &, int ,string & ); // Uses global var cQuickText.
+BOOL CALLBACK DlgConfigProc( HWND, UINT, WPARAM, LPARAM );
 
 //////////////////////////////////////////////////////////////////////////
 /*
@@ -64,3 +59,5 @@ HINSTANCE appInstance;
 // *** Variables
 INIMap tags, tags_replica;
 basic_string<TCHAR> tagsFileName;
+
+#endif

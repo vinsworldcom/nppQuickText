@@ -16,8 +16,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef INI_H
-#define INI_H
+#ifndef INIMAP_H
+#define INIMAP_H
 
 #include <map>
 #include <string>

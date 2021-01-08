@@ -16,32 +16,39 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef QUICKTEXT_H
-    #define QUICKTEXT_H
-    #include "QuickText.h"
-#endif // QUICKTEXT_H
-
+#include <windows.h>
+#include <commctrl.h>
 #include <intsafe.h>
 #include <shlwapi.h>
 
+#include "PluginInterface.h"
+#include "menuCmdID.h"
+#include "resource.h"
+#include "QuickText.h"
+
+#include "lib/INIMap.h"
+#include "lib/IniFile.h"
+#include "lib/QTString.h"
+
 #define NEW_HOTSPOT -1
-#define SZ_LANG 32
 #define SZ_TAG 32
-#define SZ_TEXT 512
 
 // *** Plugin specific variables
 const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
-//+@TonyM: nbFunc = 2 -> nbFunc = 5;
-const int nbFunc = 5; // number of functions
+const int nbFunc = 7; 
+
 const TCHAR confFileName[]    = TEXT( "QuickText.conf.ini" );
 const TCHAR dataFileName[]    = TEXT( "QuickText.ini" );
 const TCHAR dataFileDefault[] = TEXT( "QuickText.default.ini" );
 basic_string<TCHAR> confFilePath;
 const char sectionName[]        = "General";
-const char iniKeyAllowedChars[] = "allowedChars";
+const char iniKeyAllowedChars[] = "AllowedChars";
+const char iniInsertOnAutoC[]   = "InsertOnAutoC";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
+
+bool g_bInsertOnAutoC = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
@@ -49,7 +56,31 @@ std::string allowedChars =
 //+@TonyM: string lang_menu[] -> vector<string> lang_menu(256) - for dynamic loading from configuration file.
 vector<string> lang_menu;
 
-std::string wstrtostr( const std::wstring & );
+#define REGIMGID 20820
+/* XPM */
+const char *xpmQt[] = {
+/* columns rows colors chars-per-pixel */
+    "16 16 2 1 ",
+    "  c #010101",
+    ". c white",
+    /* pixels */
+    "................",
+    ".... ...........",
+    ".... ...........",
+    ".... .... ......",
+    "... .....  .....",
+    "... ..... . ....",
+    "...       .. ...",
+    "...  ........ ..",
+    ".. . ......... .",
+    ".. . ......... .",
+    ".. . ........ ..",
+    ".. .      .. ...",
+    ". ....... . ....",
+    ". .......  .....",
+    ". ....... ......",
+    "................"
+};
 
 void commandMenuCleanUp()
 {
@@ -68,6 +99,8 @@ void pluginCleanUp()
 
     ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars,
                                  allowedChars.c_str(), ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniInsertOnAutoC,
+                                 g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
 }
 
 // *** Main
@@ -140,22 +173,29 @@ void commandMenuInit()
     lstrcpy( funcItems[0]._itemName, _T( "&Replace Tag" ) );
     funcItems[0]._init2Check = false;
 
-    funcItems[1]._pFunc = loadConfig;
-    lstrcpy( funcItems[1]._itemName, _T( "&Options..." ) );
+    funcItems[1]._pFunc = NULL;
+    lstrcpy( funcItems[1]._itemName, _T( "-SEPARATOR-" ) );
     funcItems[1]._init2Check = false;
 
-    //+@TonyM: Added 3 new plugin menu commands
-    funcItems[2]._pFunc = refreshINIMap;
-    lstrcpy( funcItems[2]._itemName, _T( "Re&fresh Configuration" ) );
+    funcItems[2]._pFunc = openTagsFile;
+    lstrcpy( funcItems[2]._itemName, _T( "Open &Tags File" ) );
     funcItems[2]._init2Check = false;
 
-    funcItems[3]._pFunc = openTagsFile;
-    lstrcpy( funcItems[3]._itemName, _T( "Open &Tags File" ) );
+    funcItems[3]._pFunc = openConfigFile;
+    lstrcpy( funcItems[3]._itemName, _T( "Open &Config File" ) );
     funcItems[3]._init2Check = false;
 
-    funcItems[4]._pFunc = openConfigFile;
-    lstrcpy( funcItems[4]._itemName, _T( "Open &Config File" ) );
+    funcItems[4]._pFunc = refreshINIMap;
+    lstrcpy( funcItems[4]._itemName, _T( "Re&fresh Configuration" ) );
     funcItems[4]._init2Check = false;
+
+    funcItems[5]._pFunc = NULL;
+    lstrcpy( funcItems[5]._itemName, _T( "-SEPARATOR-" ) );
+    funcItems[5]._init2Check = false;
+
+    funcItems[6]._pFunc = loadConfig;
+    lstrcpy( funcItems[6]._itemName, _T( "&Settings" ) );
+    funcItems[6]._init2Check = false;
 
     Config.indenting = true;
 
@@ -204,7 +244,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
                             ( *i ) += notifyCode->length;
 
                     // 2019-03-23:MVINCENT: if current position is at the end
-                    //   of inserted tag text the clear the tag hotspots else
+                    //   of inserted tag text then clear the tag hotspots else
                     //   inserted chars add to the overall length
                     int currpos = static_cast<int>( SendMessage( getCurrentHScintilla(),
                                                     SCI_GETCURRENTPOS, 0, 0 ) );
@@ -251,6 +291,13 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
         }
         break;
 
+        case SCN_AUTOCCOMPLETED:
+        {
+           if ( g_bInsertOnAutoC )
+               QuickText();
+        }
+        break;
+
         case NPPN_SHUTDOWN:
         {
             commandMenuCleanUp();
@@ -278,7 +325,7 @@ extern "C" __declspec( dllexport ) BOOL isUnicode()
 
 /* Functions */
 // get Scintilla's Handle
-HWND &getCurrentHScintilla()
+HWND getCurrentHScintilla()
 {
     int currentEdit;
     SendMessage( nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0,
@@ -314,9 +361,17 @@ void _refreshINIFiles()
     //+@TonyM: Reads allowedChars value from config file on each config refresh
     std::string ini_allowedChars = CIniFile::GetValue( iniKeyAllowedChars,
                                    ini_file_section, ini_file_path );
-
     if ( !ini_allowedChars.empty() )
         allowedChars = ini_allowedChars;
+
+    std::string autoC = CIniFile::GetValue( iniInsertOnAutoC,
+                                     ini_file_section, ini_file_path );
+    if ( !autoC.empty() )
+    {
+        int val = std::stoi( autoC );
+        if ( val != 0 )
+            g_bInsertOnAutoC = true;
+    }
 
     int i = 0;
     TCHAR langName[MAX_PATH];
@@ -329,20 +384,9 @@ void _refreshINIFiles()
     } while ( ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 ) 
            && ( i < 255 ) );
     lang_menu.push_back( "GLOBAL" );
-
-    //+#DEBUG
-    /*
-    stringstream ss;
-    ss << lang_menu.at(1).size();
-    //+@TonyM: message box for config file testing (INI File parsing library)
-    std::wstring stemp = QTString::s2ws(ss.str()); // Temporary buffer is required
-    LPCWSTR result = stemp.c_str();
-    MessageBox(nppData._nppHandle, result, _T("QuickText"), MB_OK | MB_ICONINFORMATION);
-    */
-    //-#DEBUG
 }
 
-// Clears and loads again the INI file
+// Clears and loads the INI file
 void refreshINIMap()
 {
     _refreshINIFiles();
@@ -366,8 +410,6 @@ void openTagsFile()
 // Strip all the line breaks
 void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
 {
-    // Get line break chars
-    //+@TonyM: incorrect newline detection
     char newline[3] = "\r\n";
 
     if ( doc )
@@ -418,8 +460,7 @@ void revStripBreaks( string &str )
     }
 }
 
-// set  cQuickText.text to substitution texts
-// setup hotspots hopping
+// set cQuickText.text to substitution texts, setup hotspots hopping
 void decodeStr( cstring &str, int start, string &indent )
 {
     cQuickText.text = str;
@@ -460,7 +501,6 @@ void decodeStr( cstring &str, int start, string &indent )
     }
 }
 
-// QuickTxt function
 void QuickText()
 {
     HWND scintilla = getCurrentHScintilla();
@@ -472,6 +512,11 @@ void QuickText()
     char sLangType[3];
     char sLangTypeGlobal[3];
 
+    // cannot handle multiple selections
+    int sels = (int)::SendMessage( scintilla, SCI_GETSELECTIONS, 0, 0 );
+    if (sels > 1)
+      return;
+
     // define 'text' for scintilla
     SendMessage( scintilla, SCI_SETWORDCHARS, 0,
                  ( LPARAM )allowedChars.c_str() );
@@ -482,20 +527,6 @@ void QuickText()
     textSelectionEnd = static_cast<int>( SendMessage( scintilla,
                                          SCI_GETSELECTIONEND, 0, 0 ) );
 
-    // text selected, restore default key behavior
-    //+@TonyM: Not needed if not using the tab shortcut key.
-    //+@TonyM: Explanation: If text is selected and we press the tab key, the tab space shoud appear,
-    //+@TonyM: but if we set another shortcut combo, then it behaves like a tab, which is annoying with placeholders.
-    /*-@TonyM:
-    if(textSelectionEnd != textSelectionStart)
-    {
-        // restoring tab functionality
-        if (funcItems[0]._pShKey->_key == VK_TAB)
-            SendMessage(scintilla,SCI_TAB,0,0);
-
-        return;
-    }
-    */
     // get 'text' location
     curPos = static_cast<int>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
                                             0 ) );
@@ -504,31 +535,27 @@ void QuickText()
     endPos = static_cast<int>( SendMessage( scintilla, SCI_WORDENDPOSITION,
                                             curPos, ( LPARAM )true ) );
 
-
-
     // copy 'text' to tag
     SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
     SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
     SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
 
-    // validate the key
-    //+@TonyM: to popup autocompletion list without first letter
-    //+MVINCENT: we want at least 1 letter - maybe an option for 0?
-    //+MVINCENT: don't think we can restore TAB hotkey with 0 length autoComplete
     if ( strlen( tag ) == 0 && !cQuickText.editing )
     {
-        // if using hotkey with NOTHING before it don't autocomplete
-        restoreKeyStroke( curPos, scintilla );
-        return;
+        // Get current shortcut key (no modifiers necessary)
+        ShortcutKey sk;
+        SendMessage( nppData._nppHandle, NPPM_GETSHORTCUTBYCMDID,
+                    ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
+
+        if (( sk._key == VK_TAB ) || ( sk._key == VK_RETURN ) &&
+              !sk._isCtrl && !sk._isAlt && !sk._isShift )
+        {
+            restoreKeyStroke( curPos, scintilla );
+            return;
+        }
     }
 
-//  if (!isValidKey(tag) && !cQuickText.editing) {
-//      MessageBox(nppData._nppHandle, _T("Only alphanumerical characters."), _T("QuickText"), MB_OK | MB_ICONINFORMATION);
-//      return;
-//  }
-
     // get the current langtype
-
     SendMessage( nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0,
                  ( LPARAM )&langtype );
     _itoa( langtype, sLangType, 10 );
@@ -581,15 +608,9 @@ void QuickText()
         // decode key into value
         // tags within Current lang takes priority over Global language
         if ( tagInCurrentLang )
-        {
-            //MessageBox(nppData._nppHandle, _T("current tag"), _T("QuickText"), MB_OK | MB_ICONINFORMATION);
             decodeStr( tags[sLangType][tag], startPos, indent );
-        }
         else if ( tagInGlobalLang )
-        {
-            //MessageBox(nppData._nppHandle, _T("global tag"), _T("QuickText"), MB_OK | MB_ICONINFORMATION);
             decodeStr( tags[sLangTypeGlobal][tag], startPos, indent );
-        }
 
         // replace it in scintilla
         SendMessage( scintilla, SCI_REPLACESEL, 0,
@@ -608,8 +629,10 @@ void QuickText()
     // autoComplete mode for tags
     else if ( tagList.size() > 0 )
     {
-        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( '\n' ), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
         SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
+        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
 
         // restoring original selection
         SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
@@ -623,19 +646,17 @@ void QuickText()
                 index++ )
         {
             tagList_ss << *index;
+            tagList_ss << '?';
+            tagList_ss << REGIMGID;
 
             if ( ( index + 1 ) != tagListEnd )
-                tagList_ss << '\n';
+                tagList_ss << ' ';
         }
 
         string newList = tagList_ss.str();
 
-        // need to build custom ListBox
-
-        //+@TonyM: (WPARAM) 1 -> (WPARAM) strlen(tag)
         SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
                      ( LPARAM )newList.c_str() );
-        //int curSEl =  static_cast<int>(SendMessage(scintilla, SCI_AUTOCGETCURRENT, 0, 0));
     }
     else
         restoreKeyStroke( curPos, scintilla );
@@ -645,7 +666,7 @@ void QuickText()
 }
 
 // hopping through hotspots
-void jump( HWND &scintilla )
+void jump( HWND scintilla )
 {
     if ( cQuickText.hotSpotsPos.size() != 0 )
     {
@@ -663,8 +684,6 @@ void jump( HWND &scintilla )
         cQuickText.editing = false;
 }
 
-
-
 // clear settings and etc.
 void clear()
 {
@@ -675,7 +694,6 @@ void clear()
     cQuickText.hotSpotsLen.clear();
 }
 
-
 void loadConfig()
 {
     tags_replica = tags; // Backup current configuration
@@ -685,7 +703,7 @@ void loadConfig()
 }
 
 BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
-                             LPARAM /* lParam */ )
+                             LPARAM lParam )
 {
     switch ( message )
     {
@@ -699,18 +717,20 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             ConfigWin.text = GetDlgItem( hwndDlg, IDTEXT );
             ConfigWin.changed = false;
 
-            // LangType contains 51 languages as of now.
-            // dynamic way to grab language names?
+            std::string version;
+            version = "<a>";
+            version += VER_STRING;
+            version += "</a>";
+            SetDlgItemTextA( hwndDlg, IDC_STC_VER, version.c_str() );
 
-            //int numberOfLang = sizeof(lang_menu)/sizeof(string);
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_SETCHECK,
+                         ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
+
             int numberOfLang;
             ULongPtrToInt ( lang_menu.size(), &numberOfLang );
-
-            // adding language to QuickText window
             for ( int i = 0; i < numberOfLang; i++ )
                 SendMessageA( ConfigWin.langCB, CB_INSERTSTRING, ( WPARAM ) - 1,
                               ( LPARAM ) lang_menu.at( i ).c_str() );
-
 
             // highlight current language in Notepad++
             int langIndex = 0;
@@ -721,9 +741,28 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             // ((LBN_SELCHANGE << 16) | ( IDLANG)) <-- message to pass through to IDLANG loop
             DlgConfigProc( hwndDlg, ( UINT ) WM_COMMAND,
                            ( WPARAM )( ( LBN_SELCHANGE << 16 ) | ( IDLANG ) ), 0 );
-
         }
         break;
+
+        case WM_NOTIFY:
+        {
+            switch (((LPNMHDR)lParam)->code)
+            {
+                case NM_CLICK:
+                case NM_RETURN:
+                {
+                    PNMLINK pNMLink = (PNMLINK)lParam;
+                    LITEM   item    = pNMLink->item;
+                    HWND ver = GetDlgItem( hwndDlg, IDC_STC_VER );
+
+                    if ((((LPNMHDR)lParam)->hwndFrom == ver) && (item.iLink == 0))
+                        ShellExecute(hwndDlg, TEXT("open"), TEXT("https://github.com/VinsWorldcom/nppQuickText"), NULL, NULL, SW_SHOWNORMAL);
+
+                    return TRUE;
+                }
+            }
+            break;
+        }
 
         case WM_COMMAND:
             switch ( LOWORD( wParam ) )
@@ -765,6 +804,19 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                     return TRUE;
 
+                case IDC_CHK_AIA:
+                {
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ),
+                                                      BM_GETCHECK, 0, 0 );
+
+                    if ( check & BST_CHECKED )
+                        g_bInsertOnAutoC = true;
+                    else
+                        g_bInsertOnAutoC = false;
+
+                    return TRUE;
+                }
+
                 case IDLANG_CB:
 
                 //+@TonyM: Tag names list for selected language in GUI ("Options..." dialog)
@@ -785,7 +837,6 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             SendMessage( ConfigWin.tag, LB_RESETCONTENT, 0, 0 );
 
                             // Get lang
-                            //lang = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL, 0, 0);
                             lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@TonyM: to treat number 255 from QuickText.ini as GLOBAL group.
@@ -823,7 +874,6 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             EnableWindow( ConfigWin.text, TRUE );
 
                             // Fetch the lang and tag.
-                            //lang = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL, 0, 0);
                             lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@TonyM: to treat number 255 from QuickText.ini as GLOBAL group.
@@ -859,7 +909,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case EN_CHANGE:
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify [M]" );
+                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "&Modify" );
                             ConfigWin.changed = true;
                             break;
                     }
@@ -872,7 +922,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case EN_CHANGE:
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify [M]" );
+                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "&Add" );
                             ConfigWin.changed = true;
                             break;
 
@@ -931,7 +981,6 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                     size_t )textLength ) ) );
 
                             // get language
-                            //language = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL,0,0);
                             language = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@VinsWorldcom: to treat number 255 from QuickText.ini as GLOBAL group.
@@ -1000,12 +1049,10 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                           ( LPARAM ) tagname );
 
                             // Fetch the lang
-                            //lang = (int) SendMessage(ConfigWin.lang, LB_GETCURSEL, 0, 0);
                             lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@VinsWorldcom: to treat number 255 from QuickText.ini as GLOBAL group.
-                            // missed on https://github.com/vinsworldcom/nppQuickText/issues/10
-                            // reported in https://github.com/vinsworldcom/nppQuickText/issues/13
+                            // https://github.com/vinsworldcom/nppQuickText/issues/10
                             if ( lang == ( lang_menu.size() - 1 ) )
                                 lang = 255;
 
@@ -1043,43 +1090,19 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
     return FALSE;
 }
 // if tag doesn't exist, a tab should be outputted
-bool restoreKeyStroke( int cursorPos, HWND &scintilla )
+bool restoreKeyStroke( int cursorPos, HWND scintilla )
 {
     // restoring original selection
-    SendMessage( scintilla, SCI_SETCURRENTPOS, cursorPos, 0 );
-    SendMessage( scintilla, SCI_SETSELECTIONSTART, cursorPos, ( LPARAM )true );
-    SendMessage( scintilla, SCI_SETSELECTIONEND, cursorPos, ( LPARAM )true );
+    SendMessage( scintilla, SCI_SETEMPTYSELECTION, cursorPos, 0 );
 
     // Get current shortcut key (no modifiers necessary)
     ShortcutKey sk;
     SendMessage( nppData._nppHandle, NPPM_GETSHORTCUTBYCMDID,
                  ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
 
-    CHAR buf[101];    // Because N++ allows 99 as max tab-to-space conversion
-    if ( sk._key == VK_TAB )
-    {
+    if ( ( sk._key == VK_TAB ) &&
+          !sk._isCtrl && !sk._isAlt && !sk._isShift )
         SendMessage( scintilla, SCI_TAB, 0, 0 );
-
-        // bool useTabs = ::SendMessage( scintilla, SCI_GETUSETABS, 0, 0 );
-        // if ( useTabs )
-        // {
-            // sprintf( buf, "%c", sk._key );
-            // ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
-        // }
-        // else
-        // {
-            // int tabSpace = ( int )::SendMessage( scintilla, SCI_GETTABWIDTH, 0, 0 );
-            // for (int i = 0; ((i < tabSpace) && (i<100)); i++)
-                // buf[i] = ' ';
-            // buf[tabSpace] = '\0';
-            // ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
-        // }
-    }
-    else
-    {
-        sprintf( buf, "%c", sk._key );
-        ::SendMessage( scintilla, SCI_REPLACESEL, cursorPos, ( LPARAM )buf );
-    }
 
     return true;
 }
