@@ -7,7 +7,6 @@ tags
 *.lib
 *.iobj
 *.ipdb
-*.user
 *.zip
 bin/*
 bin64/*
