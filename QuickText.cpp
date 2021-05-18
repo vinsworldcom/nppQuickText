@@ -49,6 +49,7 @@ NppData nppData; // handles
 FuncItem funcItems[nbFunc];
 
 bool g_bInsertOnAutoC = false;
+bool g_bCharAdded = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
@@ -291,6 +292,16 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
         }
         break;
 
+        case SCN_CHARADDED:
+        {
+            if ( ! cQuickText.editing )
+            {
+                g_bCharAdded = true;
+                QuickText();
+            }
+        }
+        break;
+
         case SCN_AUTOCCOMPLETED:
         {
            if ( g_bInsertOnAutoC )
@@ -522,10 +533,10 @@ void QuickText()
                  ( LPARAM )allowedChars.c_str() );
 
     // if a block of text is selected for tabbing
-    textSelectionStart = static_cast<int>( SendMessage( scintilla,
-                                           SCI_GETSELECTIONSTART, 0, 0 ) );
-    textSelectionEnd = static_cast<int>( SendMessage( scintilla,
-                                         SCI_GETSELECTIONEND, 0, 0 ) );
+    // textSelectionStart = static_cast<int>( SendMessage( scintilla,
+                                           // SCI_GETSELECTIONSTART, 0, 0 ) );
+    // textSelectionEnd = static_cast<int>( SendMessage( scintilla,
+                                         // SCI_GETSELECTIONEND, 0, 0 ) );
 
     // get 'text' location
     curPos = static_cast<int>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
@@ -571,6 +582,44 @@ void QuickText()
     tagList.insert ( tagList.end(), g_tagList.begin(), g_tagList.end() );
     //+@TonyM: free memory:
     g_tagList.clear();
+
+    if ( tagList.size() > 0 && ( endPos - startPos > 0 ) || ( ! g_bCharAdded && ! cQuickText.editing ))
+    {
+        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
+        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
+
+        // restoring original selection
+        SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
+        SendMessage( scintilla, SCI_SETSELECTIONSTART, curPos, ( LPARAM )true );
+        SendMessage( scintilla, SCI_SETSELECTIONEND, curPos, ( LPARAM )true );
+
+        stringstream tagList_ss;
+        TagList::const_iterator tagListEnd = tagList.end();
+
+        for ( TagList::const_iterator index = tagList.begin(); index != tagListEnd;
+                index++ )
+        {
+            tagList_ss << *index;
+            tagList_ss << '?';
+            tagList_ss << REGIMGID;
+
+            if ( ( index + 1 ) != tagListEnd )
+                tagList_ss << ' ';
+        }
+
+        string newList = tagList_ss.str();
+
+        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
+                     ( LPARAM )newList.c_str() );
+    }
+    if ( g_bCharAdded )
+    {
+        restoreKeyStroke( curPos, scintilla );
+        g_bCharAdded = false;
+        return;
+    }
 
     // check exact tag match
     if ( tagInCurrentLang || tagInGlobalLang )
@@ -627,37 +676,6 @@ void QuickText()
     else if ( cQuickText.editing )
         jump( scintilla );
     // autoComplete mode for tags
-    else if ( tagList.size() > 0 )
-    {
-        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
-        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
-        SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
-        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
-
-        // restoring original selection
-        SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
-        SendMessage( scintilla, SCI_SETSELECTIONSTART, curPos, ( LPARAM )true );
-        SendMessage( scintilla, SCI_SETSELECTIONEND, curPos, ( LPARAM )true );
-
-        stringstream tagList_ss;
-        TagList::const_iterator tagListEnd = tagList.end();
-
-        for ( TagList::const_iterator index = tagList.begin(); index != tagListEnd;
-                index++ )
-        {
-            tagList_ss << *index;
-            tagList_ss << '?';
-            tagList_ss << REGIMGID;
-
-            if ( ( index + 1 ) != tagListEnd )
-                tagList_ss << ' ';
-        }
-
-        string newList = tagList_ss.str();
-
-        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
-                     ( LPARAM )newList.c_str() );
-    }
     else
         restoreKeyStroke( curPos, scintilla );
 
