@@ -582,6 +582,7 @@ void QuickText()
     tagList.insert ( tagList.end(), g_tagList.begin(), g_tagList.end() );
     //+@TonyM: free memory:
     g_tagList.clear();
+    sort( tagList.begin(), tagList.end() );
 
     if ( tagList.size() > 0 && ( endPos - startPos > 0 ) || ( ! g_bCharAdded && ! cQuickText.editing ))
     {
