@@ -253,7 +253,11 @@ TagList INIMap::queryTags( cstring &section, cstring &tag )
             tagPointer++;
         }
 
-        sort( tagList.begin(), tagList.end() );
+        // Nice to return a sorted list, but if we get a language list (sort)
+        // then a global list (sort) and then combine, still need to sort the 
+        // result - so 3 sorts?  How about skip it and only sort the one time, 
+        // since we only call queryTags() from QuickText()
+        // sort( tagList.begin(), tagList.end() );
     }
 
     return tagList;
