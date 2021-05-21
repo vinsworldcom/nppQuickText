@@ -43,12 +43,14 @@ const TCHAR dataFileDefault[] = TEXT( "QuickText.default.ini" );
 basic_string<TCHAR> confFilePath;
 const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "AllowedChars";
+const char iniUseSciAutoC[]     = "UseSciAutoC";
 const char iniInsertOnAutoC[]   = "InsertOnAutoC";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
 
 bool g_bInsertOnAutoC = false;
+bool g_bUseSciAutoC = false;
 bool g_bCharAdded = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
@@ -100,6 +102,8 @@ void pluginCleanUp()
 
     ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars,
                                  allowedChars.c_str(), ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniUseSciAutoC,
+                                 g_bUseSciAutoC ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniInsertOnAutoC,
                                  g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
 }
@@ -294,7 +298,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
 
         case SCN_CHARADDED:
         {
-            if ( ! cQuickText.editing )
+            if ( ! cQuickText.editing && g_bUseSciAutoC )
             {
                 g_bCharAdded = true;
                 QuickText();
@@ -375,11 +379,19 @@ void _refreshINIFiles()
     if ( !ini_allowedChars.empty() )
         allowedChars = ini_allowedChars;
 
-    std::string autoC = CIniFile::GetValue( iniInsertOnAutoC,
+    std::string useAutoC = CIniFile::GetValue( iniUseSciAutoC,
                                      ini_file_section, ini_file_path );
-    if ( !autoC.empty() )
+    if ( !useAutoC.empty() )
     {
-        int val = std::stoi( autoC );
+        int val = std::stoi( useAutoC );
+        if ( val != 0 )
+            g_bUseSciAutoC = true;
+    }
+    std::string doAutoC = CIniFile::GetValue( iniInsertOnAutoC,
+                                     ini_file_section, ini_file_path );
+    if ( !doAutoC.empty() )
+    {
+        int val = std::stoi( doAutoC );
         if ( val != 0 )
             g_bInsertOnAutoC = true;
     }
@@ -742,6 +754,8 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             version += "</a>";
             SetDlgItemTextA( hwndDlg, IDC_STC_VER, version.c_str() );
 
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ), BM_SETCHECK,
+                         ( WPARAM )( g_bUseSciAutoC ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_SETCHECK,
                          ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
 
@@ -822,6 +836,19 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         EndDialog( hwndDlg, wParam );
 
                     return TRUE;
+
+                case IDC_CHK_USA:
+                {
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ),
+                                                      BM_GETCHECK, 0, 0 );
+
+                    if ( check & BST_CHECKED )
+                        g_bUseSciAutoC = true;
+                    else
+                        g_bUseSciAutoC = false;
+
+                    return TRUE;
+                }
 
                 case IDC_CHK_AIA:
                 {
