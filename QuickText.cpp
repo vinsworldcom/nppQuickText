@@ -600,11 +600,6 @@ void QuickText()
 
     if ( tagList.size() > 0 && ( endPos - startPos > 0 ) || ( ! g_bCharAdded && ! cQuickText.editing ))
     {
-        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
-        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
-        SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
-        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
-
         // restoring original selection
         SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
         SendMessage( scintilla, SCI_SETSELECTIONSTART, curPos, ( LPARAM )true );
@@ -626,6 +621,10 @@ void QuickText()
 
         string newList = tagList_ss.str();
 
+        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
+        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
         SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
                      ( LPARAM )newList.c_str() );
     }
