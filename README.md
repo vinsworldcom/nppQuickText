@@ -79,20 +79,32 @@ to the Notepad++ plugins folder:
 Assign a shortcut key to the Plugins => QuickText => Replace Tag menu to 
 use QuickText tags from within the current Notepad++ document.
 
-If the Tag insertion hotkey is used and there is no text before it or
-no valid expansion for the text before it, the Tag insertion hotkey
+If the Replace Tag hotkey is used and there is no text before it or
+no valid expansion for the text before it, the Replace Tag hotkey
 character is inserted.  For example, using "Tab" as the key with
 no valid expansion just inserts a tab (as if Tab key press).
 
-Once a Tag is inserted, you can use the Tag insertion hotkey again and 
+Once a Tag is inserted, you can use the Replace Tag hotkey again and 
 again to navigate through the hotspots in the inserted Tag snippet.
 
-**NOTE:**  Tab can now be used again as the Tag insertion hotkey.
+**NOTE:**  Tab can now be used again as the Replace Tag hotkey.
            There is no default.
 
 ## Customization
 
+Settings:
+
+Use to configure Tags for languages.
++ **Use Scintilla Autocomplete**: uses Scintilla autocomplete while typing to 
+  suggest tags for the current language.  Without this enabled, you need to 
+  trigger the Replace Tag hotkey to get the autocomplete list or just type 
+  a Tag from memory.
++ **Auto Insert Autocomplete**: when a tag is completed from a Scintilla 
+  autocompletion, expand the tag.  Without this enabled, you need to trigger 
+  the Replace Tag hotkey again to expand the Tag.
+
 To make you're own tags:
+
 + Tags file (QuickText.ini) *MUST* use "Windows (CR LF)" line endings.
 + First make sure the tag's Language Section already exists. This is 
   done by creating a new section with the code corresponding to the 

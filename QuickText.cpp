@@ -43,12 +43,15 @@ const TCHAR dataFileDefault[] = TEXT( "QuickText.default.ini" );
 basic_string<TCHAR> confFilePath;
 const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "AllowedChars";
+const char iniUseSciAutoC[]     = "UseSciAutoC";
 const char iniInsertOnAutoC[]   = "InsertOnAutoC";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
 
 bool g_bInsertOnAutoC = false;
+bool g_bUseSciAutoC = false;
+bool g_bCharAdded = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
@@ -99,6 +102,8 @@ void pluginCleanUp()
 
     ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars,
                                  allowedChars.c_str(), ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniUseSciAutoC,
+                                 g_bUseSciAutoC ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniInsertOnAutoC,
                                  g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
 }
@@ -291,6 +296,16 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
         }
         break;
 
+        case SCN_CHARADDED:
+        {
+            if ( ! cQuickText.editing && g_bUseSciAutoC )
+            {
+                g_bCharAdded = true;
+                QuickText();
+            }
+        }
+        break;
+
         case SCN_AUTOCCOMPLETED:
         {
            if ( g_bInsertOnAutoC )
@@ -364,11 +379,19 @@ void _refreshINIFiles()
     if ( !ini_allowedChars.empty() )
         allowedChars = ini_allowedChars;
 
-    std::string autoC = CIniFile::GetValue( iniInsertOnAutoC,
+    std::string useAutoC = CIniFile::GetValue( iniUseSciAutoC,
                                      ini_file_section, ini_file_path );
-    if ( !autoC.empty() )
+    if ( !useAutoC.empty() )
     {
-        int val = std::stoi( autoC );
+        int val = std::stoi( useAutoC );
+        if ( val != 0 )
+            g_bUseSciAutoC = true;
+    }
+    std::string doAutoC = CIniFile::GetValue( iniInsertOnAutoC,
+                                     ini_file_section, ini_file_path );
+    if ( !doAutoC.empty() )
+    {
+        int val = std::stoi( doAutoC );
         if ( val != 0 )
             g_bInsertOnAutoC = true;
     }
@@ -522,10 +545,10 @@ void QuickText()
                  ( LPARAM )allowedChars.c_str() );
 
     // if a block of text is selected for tabbing
-    textSelectionStart = static_cast<int>( SendMessage( scintilla,
-                                           SCI_GETSELECTIONSTART, 0, 0 ) );
-    textSelectionEnd = static_cast<int>( SendMessage( scintilla,
-                                         SCI_GETSELECTIONEND, 0, 0 ) );
+    // textSelectionStart = static_cast<int>( SendMessage( scintilla,
+                                           // SCI_GETSELECTIONSTART, 0, 0 ) );
+    // textSelectionEnd = static_cast<int>( SendMessage( scintilla,
+                                         // SCI_GETSELECTIONEND, 0, 0 ) );
 
     // get 'text' location
     curPos = static_cast<int>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
@@ -571,6 +594,46 @@ void QuickText()
     tagList.insert ( tagList.end(), g_tagList.begin(), g_tagList.end() );
     //+@TonyM: free memory:
     g_tagList.clear();
+
+    // sort the combined language and global list
+    sort( tagList.begin(), tagList.end() );
+
+    if ( tagList.size() > 0 && ( endPos - startPos > 0 ) || ( ! g_bCharAdded && ! cQuickText.editing ))
+    {
+        // restoring original selection
+        SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
+        SendMessage( scintilla, SCI_SETSELECTIONSTART, curPos, ( LPARAM )true );
+        SendMessage( scintilla, SCI_SETSELECTIONEND, curPos, ( LPARAM )true );
+
+        stringstream tagList_ss;
+        TagList::const_iterator tagListEnd = tagList.end();
+
+        for ( TagList::const_iterator index = tagList.begin(); index != tagListEnd;
+                index++ )
+        {
+            tagList_ss << *index;
+            tagList_ss << '?';
+            tagList_ss << REGIMGID;
+
+            if ( ( index + 1 ) != tagListEnd )
+                tagList_ss << ' ';
+        }
+
+        string newList = tagList_ss.str();
+
+        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
+        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
+        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
+                     ( LPARAM )newList.c_str() );
+    }
+    if ( g_bCharAdded )
+    {
+        restoreKeyStroke( curPos, scintilla );
+        g_bCharAdded = false;
+        return;
+    }
 
     // check exact tag match
     if ( tagInCurrentLang || tagInGlobalLang )
@@ -627,37 +690,6 @@ void QuickText()
     else if ( cQuickText.editing )
         jump( scintilla );
     // autoComplete mode for tags
-    else if ( tagList.size() > 0 )
-    {
-        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
-        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
-        SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
-        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
-
-        // restoring original selection
-        SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
-        SendMessage( scintilla, SCI_SETSELECTIONSTART, curPos, ( LPARAM )true );
-        SendMessage( scintilla, SCI_SETSELECTIONEND, curPos, ( LPARAM )true );
-
-        stringstream tagList_ss;
-        TagList::const_iterator tagListEnd = tagList.end();
-
-        for ( TagList::const_iterator index = tagList.begin(); index != tagListEnd;
-                index++ )
-        {
-            tagList_ss << *index;
-            tagList_ss << '?';
-            tagList_ss << REGIMGID;
-
-            if ( ( index + 1 ) != tagListEnd )
-                tagList_ss << ' ';
-        }
-
-        string newList = tagList_ss.str();
-
-        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
-                     ( LPARAM )newList.c_str() );
-    }
     else
         restoreKeyStroke( curPos, scintilla );
 
@@ -723,6 +755,8 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             version += "</a>";
             SetDlgItemTextA( hwndDlg, IDC_STC_VER, version.c_str() );
 
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ), BM_SETCHECK,
+                         ( WPARAM )( g_bUseSciAutoC ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_SETCHECK,
                          ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
 
@@ -803,6 +837,19 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         EndDialog( hwndDlg, wParam );
 
                     return TRUE;
+
+                case IDC_CHK_USA:
+                {
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ),
+                                                      BM_GETCHECK, 0, 0 );
+
+                    if ( check & BST_CHECKED )
+                        g_bUseSciAutoC = true;
+                    else
+                        g_bUseSciAutoC = false;
+
+                    return TRUE;
+                }
 
                 case IDC_CHK_AIA:
                 {

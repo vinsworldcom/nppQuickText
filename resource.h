@@ -11,7 +11,7 @@
 /* VERSION DEFINITIONS */
 #define VER_MAJOR   0
 #define VER_MINOR   2
-#define VER_RELEASE 1
+#define VER_RELEASE 2
 #define VER_BUILD   1
 #define VER_STRING  STR(VER_MAJOR) "." STR(VER_MINOR) "." STR(VER_RELEASE) "." STR(VER_BUILD)
 
@@ -40,7 +40,8 @@
 #define IDSMARTEDIT                     1017
 #define IDC_EDIT1                       1018
 #define IDC_STC_VER                     1019
-#define IDC_CHK_AIA                     1020
+#define IDC_CHK_USA                     1020
+#define IDC_CHK_AIA                     1021
 
 // Next default values for new objects
 //
