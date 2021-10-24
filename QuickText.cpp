@@ -156,7 +156,7 @@ void commandMenuInit()
     // Move data file to plugins/config if not there
     if ( ! PathFileExists( tagsFileName.c_str() ) )
     {
-        TCHAR temp[256];
+        TCHAR temp[MAX_PATH];
         basic_string<TCHAR> defaultDbTile;
 
         GetModuleFileName( ( HMODULE )appInstance, temp, sizeof( temp ) );
@@ -529,7 +529,7 @@ void QuickText()
     HWND scintilla = getCurrentHScintilla();
 
     int curPos, startPos, endPos;
-    int textSelectionStart, textSelectionEnd ;
+    // int textSelectionStart, textSelectionEnd ;
     char tag[256];
     LangType langtype;
     char sLangType[3];
@@ -554,7 +554,7 @@ void QuickText()
     curPos = static_cast<int>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
                                             0 ) );
     startPos = static_cast<int>( SendMessage( scintilla, SCI_WORDSTARTPOSITION,
-                                 curPos, ( LPARAM )true ) );
+                                              curPos, ( LPARAM )true ) );
     endPos = static_cast<int>( SendMessage( scintilla, SCI_WORDENDPOSITION,
                                             curPos, ( LPARAM )true ) );
 
