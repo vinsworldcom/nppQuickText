@@ -461,12 +461,28 @@ void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
     int newlineLength = ( int )strlen( newline );
 
     // 2019-03-22:MVINCENT: static_cast<unsigned>(str.npos) for 64-bit
-    while ( ( i = static_cast<unsigned>( str.find( "\\n" ) ) ) !=
-            static_cast<unsigned>( str.npos ) )
+    // while ( ( i = static_cast<unsigned>( str.find( "\\n" ) ) ) !=
+            // static_cast<unsigned>( str.npos ) )
+    // {
+        // str.erase( i, 2 );
+        // str.insert( i, newline, newlineLength );
+        // str.insert( i + newlineLength, indent );
+    // }
+    i = 0;
+    while ( i < str.length() )
     {
-        str.erase( i, 2 );
-        str.insert( i, newline, newlineLength );
-        str.insert( i + newlineLength, indent );
+        i = str.find("\\n", i);
+        if ( i == static_cast<unsigned>(str.npos) )
+            break;
+        
+        if ( ( i == 0 ) || ( ( i > 0 ) && ( str.at( i - 1 ) != '\\' ) ) )
+        {
+            str.erase( i, 2 );
+            str.insert( i, newline, newlineLength );
+            str.insert( i + newlineLength, indent );
+        }
+        else
+            str.erase( i, 1 );
     }
 }
 
