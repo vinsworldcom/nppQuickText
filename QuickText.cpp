@@ -642,10 +642,10 @@ void QuickText()
         string indent;
 
         // if indenting is ON
-        if ( Config.indenting )
-        {
+        // if ( Config.indenting )
+        // {
             // get positions in text
-            char temp[128];
+            // char temp[128];
             int lineNumber = static_cast<int>( SendMessage( scintilla,
                                                SCI_LINEFROMPOSITION, curPos, 0 ) );
             int startline = static_cast<int>( SendMessage( scintilla,
@@ -653,6 +653,9 @@ void QuickText()
             // from start of line to start of tag
             SendMessage( scintilla, SCI_SETSELECTIONSTART, startline, 0 );
             SendMessage( scintilla, SCI_SETSELECTIONEND, startPos, 0 );
+
+            int buffsize = (int)SendMessage( scintilla, SCI_GETSELTEXT, 0, 0 );
+            char *temp = new char[buffsize + 1];
             SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )temp );
 
             indent = temp;
@@ -666,7 +669,7 @@ void QuickText()
             // put it back
             SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
             SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
-        }
+        // }
 
         // decode key into value
         // tags within Current lang takes priority over Global language
@@ -674,6 +677,8 @@ void QuickText()
             decodeStr( tags[sLangType][tag], startPos, indent );
         else if ( tagInGlobalLang )
             decodeStr( tags[sLangTypeGlobal][tag], startPos, indent );
+
+        delete temp;
 
         // replace it in scintilla
         SendMessage( scintilla, SCI_REPLACESEL, 0,
