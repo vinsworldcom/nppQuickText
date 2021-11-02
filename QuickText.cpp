@@ -590,6 +590,7 @@ void QuickText()
               !sk._isCtrl && !sk._isAlt && !sk._isShift )
         {
             restoreKeyStroke( curPos, scintilla );
+            SendMessage( scintilla, SCI_SETCHARSDEFAULT, 0, 0 );
             return;
         }
     }
@@ -647,6 +648,7 @@ void QuickText()
     if ( g_bCharAdded )
     {
         restoreKeyStroke( curPos, scintilla );
+        SendMessage( scintilla, SCI_SETCHARSDEFAULT, 0, 0 );
         g_bCharAdded = false;
         return;
     }
