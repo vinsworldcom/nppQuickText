@@ -43,12 +43,15 @@ const TCHAR dataFileDefault[] = TEXT( "QuickText.default.ini" );
 basic_string<TCHAR> confFilePath;
 const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "AllowedChars";
+const char iniUseSciAutoC[]     = "UseSciAutoC";
 const char iniInsertOnAutoC[]   = "InsertOnAutoC";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
 
 bool g_bInsertOnAutoC = false;
+bool g_bUseSciAutoC = false;
+bool g_bCharAdded = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
@@ -62,7 +65,7 @@ const char *xpmQt[] = {
 /* columns rows colors chars-per-pixel */
     "16 16 2 1 ",
     "  c #010101",
-    ". c white",
+    ". c None",
     /* pixels */
     "................",
     ".... ...........",
@@ -99,6 +102,8 @@ void pluginCleanUp()
 
     ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars,
                                  allowedChars.c_str(), ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniUseSciAutoC,
+                                 g_bUseSciAutoC ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniInsertOnAutoC,
                                  g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
 }
@@ -151,7 +156,7 @@ void commandMenuInit()
     // Move data file to plugins/config if not there
     if ( ! PathFileExists( tagsFileName.c_str() ) )
     {
-        TCHAR temp[256];
+        TCHAR temp[MAX_PATH];
         basic_string<TCHAR> defaultDbTile;
 
         GetModuleFileName( ( HMODULE )appInstance, temp, sizeof( temp ) );
@@ -291,6 +296,16 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
         }
         break;
 
+        case SCN_CHARADDED:
+        {
+            if ( ! cQuickText.editing && g_bUseSciAutoC )
+            {
+                g_bCharAdded = true;
+                QuickText();
+            }
+        }
+        break;
+
         case SCN_AUTOCCOMPLETED:
         {
            if ( g_bInsertOnAutoC )
@@ -364,11 +379,19 @@ void _refreshINIFiles()
     if ( !ini_allowedChars.empty() )
         allowedChars = ini_allowedChars;
 
-    std::string autoC = CIniFile::GetValue( iniInsertOnAutoC,
+    std::string useAutoC = CIniFile::GetValue( iniUseSciAutoC,
                                      ini_file_section, ini_file_path );
-    if ( !autoC.empty() )
+    if ( !useAutoC.empty() )
     {
-        int val = std::stoi( autoC );
+        int val = std::stoi( useAutoC );
+        if ( val != 0 )
+            g_bUseSciAutoC = true;
+    }
+    std::string doAutoC = CIniFile::GetValue( iniInsertOnAutoC,
+                                     ini_file_section, ini_file_path );
+    if ( !doAutoC.empty() )
+    {
+        int val = std::stoi( doAutoC );
         if ( val != 0 )
             g_bInsertOnAutoC = true;
     }
@@ -438,12 +461,28 @@ void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
     int newlineLength = ( int )strlen( newline );
 
     // 2019-03-22:MVINCENT: static_cast<unsigned>(str.npos) for 64-bit
-    while ( ( i = static_cast<unsigned>( str.find( "\\n" ) ) ) !=
-            static_cast<unsigned>( str.npos ) )
+    // while ( ( i = static_cast<unsigned>( str.find( "\\n" ) ) ) !=
+            // static_cast<unsigned>( str.npos ) )
+    // {
+        // str.erase( i, 2 );
+        // str.insert( i, newline, newlineLength );
+        // str.insert( i + newlineLength, indent );
+    // }
+    i = 0;
+    while ( i < str.length() )
     {
-        str.erase( i, 2 );
-        str.insert( i, newline, newlineLength );
-        str.insert( i + newlineLength, indent );
+        i = str.find("\\n", i);
+        if ( i == static_cast<unsigned>(str.npos) )
+            break;
+        
+        if ( ( i == 0 ) || ( ( i > 0 ) && ( str.at( i - 1 ) != '\\' ) ) )
+        {
+            str.erase( i, 2 );
+            str.insert( i, newline, newlineLength );
+            str.insert( i + newlineLength, indent );
+        }
+        else
+            str.erase( i, 1 );
     }
 }
 
@@ -506,7 +545,7 @@ void QuickText()
     HWND scintilla = getCurrentHScintilla();
 
     int curPos, startPos, endPos;
-    int textSelectionStart, textSelectionEnd ;
+    // int textSelectionStart, textSelectionEnd ;
     char tag[256];
     LangType langtype;
     char sLangType[3];
@@ -522,16 +561,16 @@ void QuickText()
                  ( LPARAM )allowedChars.c_str() );
 
     // if a block of text is selected for tabbing
-    textSelectionStart = static_cast<int>( SendMessage( scintilla,
-                                           SCI_GETSELECTIONSTART, 0, 0 ) );
-    textSelectionEnd = static_cast<int>( SendMessage( scintilla,
-                                         SCI_GETSELECTIONEND, 0, 0 ) );
+    // textSelectionStart = static_cast<int>( SendMessage( scintilla,
+                                           // SCI_GETSELECTIONSTART, 0, 0 ) );
+    // textSelectionEnd = static_cast<int>( SendMessage( scintilla,
+                                         // SCI_GETSELECTIONEND, 0, 0 ) );
 
     // get 'text' location
     curPos = static_cast<int>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
                                             0 ) );
     startPos = static_cast<int>( SendMessage( scintilla, SCI_WORDSTARTPOSITION,
-                                 curPos, ( LPARAM )true ) );
+                                              curPos, ( LPARAM )true ) );
     endPos = static_cast<int>( SendMessage( scintilla, SCI_WORDENDPOSITION,
                                             curPos, ( LPARAM )true ) );
 
@@ -551,6 +590,7 @@ void QuickText()
               !sk._isCtrl && !sk._isAlt && !sk._isShift )
         {
             restoreKeyStroke( curPos, scintilla );
+            SendMessage( scintilla, SCI_SETCHARSDEFAULT, 0, 0 );
             return;
         }
     }
@@ -572,68 +612,11 @@ void QuickText()
     //+@TonyM: free memory:
     g_tagList.clear();
 
-    // check exact tag match
-    if ( tagInCurrentLang || tagInGlobalLang )
+    // sort the combined language and global list
+    sort( tagList.begin(), tagList.end() );
+
+    if ( tagList.size() > 0 && ( endPos - startPos > 0 ) || ( ! g_bCharAdded && ! cQuickText.editing ))
     {
-        clear();
-        string indent;
-
-        // if indenting is ON
-        if ( Config.indenting )
-        {
-            // get positions in text
-            char temp[128];
-            int lineNumber = static_cast<int>( SendMessage( scintilla,
-                                               SCI_LINEFROMPOSITION, curPos, 0 ) );
-            int startline = static_cast<int>( SendMessage( scintilla,
-                                              SCI_POSITIONFROMLINE, lineNumber, 0 ) );
-            // from start of line to start of tag
-            SendMessage( scintilla, SCI_SETSELECTIONSTART, startline, 0 );
-            SendMessage( scintilla, SCI_SETSELECTIONEND, startPos, 0 );
-            SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )temp );
-
-            indent = temp;
-
-            // fix the indent
-            unsigned i = static_cast<unsigned>( indent.find_first_not_of( " \t" ) );
-
-            if ( i != static_cast<unsigned>( string::npos ) )
-                indent.erase( i );
-
-            // put it back
-            SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
-            SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
-        }
-
-        // decode key into value
-        // tags within Current lang takes priority over Global language
-        if ( tagInCurrentLang )
-            decodeStr( tags[sLangType][tag], startPos, indent );
-        else if ( tagInGlobalLang )
-            decodeStr( tags[sLangTypeGlobal][tag], startPos, indent );
-
-        // replace it in scintilla
-        SendMessage( scintilla, SCI_REPLACESEL, 0,
-                     ( LPARAM )cQuickText.text.c_str() );
-
-        SendMessage( scintilla, SCI_AUTOCCANCEL, 0, 0 );
-
-        cQuickText.editing = true;
-
-        cQuickText.cHotSpot = NEW_HOTSPOT;
-        jump( scintilla );
-    }
-    // expecting to be hopping through hotspots
-    else if ( cQuickText.editing )
-        jump( scintilla );
-    // autoComplete mode for tags
-    else if ( tagList.size() > 0 )
-    {
-        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
-        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
-        SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
-        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
-
         // restoring original selection
         SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
         SendMessage( scintilla, SCI_SETSELECTIONSTART, curPos, ( LPARAM )true );
@@ -655,9 +638,81 @@ void QuickText()
 
         string newList = tagList_ss.str();
 
+        SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
+        SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
+        SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
         SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
                      ( LPARAM )newList.c_str() );
     }
+    if ( g_bCharAdded )
+    {
+        restoreKeyStroke( curPos, scintilla );
+        SendMessage( scintilla, SCI_SETCHARSDEFAULT, 0, 0 );
+        g_bCharAdded = false;
+        return;
+    }
+
+    // check exact tag match
+    if ( tagInCurrentLang || tagInGlobalLang )
+    {
+        clear();
+        string indent;
+
+        // if indenting is ON
+        // if ( Config.indenting )
+        // {
+            // get positions in text
+            // char temp[128];
+            int lineNumber = static_cast<int>( SendMessage( scintilla,
+                                               SCI_LINEFROMPOSITION, curPos, 0 ) );
+            int startline = static_cast<int>( SendMessage( scintilla,
+                                              SCI_POSITIONFROMLINE, lineNumber, 0 ) );
+            // from start of line to start of tag
+            SendMessage( scintilla, SCI_SETSELECTIONSTART, startline, 0 );
+            SendMessage( scintilla, SCI_SETSELECTIONEND, startPos, 0 );
+
+            int buffsize = (int)SendMessage( scintilla, SCI_GETSELTEXT, 0, 0 );
+            char *temp = new char[buffsize + 1];
+            SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )temp );
+
+            indent = temp;
+
+            // fix the indent
+            unsigned i = static_cast<unsigned>( indent.find_first_not_of( " \t" ) );
+
+            if ( i != static_cast<unsigned>( string::npos ) )
+                indent.erase( i );
+
+            // put it back
+            SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
+            SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
+        // }
+
+        // decode key into value
+        // tags within Current lang takes priority over Global language
+        if ( tagInCurrentLang )
+            decodeStr( tags[sLangType][tag], startPos, indent );
+        else if ( tagInGlobalLang )
+            decodeStr( tags[sLangTypeGlobal][tag], startPos, indent );
+
+        delete temp;
+
+        // replace it in scintilla
+        SendMessage( scintilla, SCI_REPLACESEL, 0,
+                     ( LPARAM )cQuickText.text.c_str() );
+
+        SendMessage( scintilla, SCI_AUTOCCANCEL, 0, 0 );
+
+        cQuickText.editing = true;
+
+        cQuickText.cHotSpot = NEW_HOTSPOT;
+        jump( scintilla );
+    }
+    // expecting to be hopping through hotspots
+    else if ( cQuickText.editing )
+        jump( scintilla );
+    // autoComplete mode for tags
     else
         restoreKeyStroke( curPos, scintilla );
 
@@ -723,6 +778,8 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             version += "</a>";
             SetDlgItemTextA( hwndDlg, IDC_STC_VER, version.c_str() );
 
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ), BM_SETCHECK,
+                         ( WPARAM )( g_bUseSciAutoC ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_SETCHECK,
                          ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
 
@@ -803,6 +860,19 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         EndDialog( hwndDlg, wParam );
 
                     return TRUE;
+
+                case IDC_CHK_USA:
+                {
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ),
+                                                      BM_GETCHECK, 0, 0 );
+
+                    if ( check & BST_CHECKED )
+                        g_bUseSciAutoC = true;
+                    else
+                        g_bUseSciAutoC = false;
+
+                    return TRUE;
+                }
 
                 case IDC_CHK_AIA:
                 {
