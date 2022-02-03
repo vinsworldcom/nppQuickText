@@ -458,18 +458,9 @@ void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
         }
     }
 
-    unsigned i;
+    unsigned i = 0;
     int newlineLength = ( int )strlen( newline );
 
-    // 2019-03-22:MVINCENT: static_cast<unsigned>(str.npos) for 64-bit
-    // while ( ( i = static_cast<unsigned>( str.find( "\\n" ) ) ) !=
-            // static_cast<unsigned>( str.npos ) )
-    // {
-        // str.erase( i, 2 );
-        // str.insert( i, newline, newlineLength );
-        // str.insert( i + newlineLength, indent );
-    // }
-    i = 0;
     while ( i < str.length() )
     {
         i = (unsigned)str.find("\\n", i);
@@ -546,9 +537,8 @@ void QuickText()
     HWND scintilla = getCurrentHScintilla();
 
     Sci_Position curPos, startPos, endPos;
-    // int textSelectionStart, textSelectionEnd ;
-    char tag[SZ_TAG + 1] = { 0 };
     LangType langtype;
+    char tag[SZ_TAG + 1] = { 0 };
     char sLangType[3];
     char sLangTypeGlobal[3];
 
@@ -561,12 +551,6 @@ void QuickText()
     SendMessage( scintilla, SCI_SETWORDCHARS, 0,
                  ( LPARAM )allowedChars.c_str() );
 
-    // if a block of text is selected for tabbing
-    // textSelectionStart = static_cast<int>( SendMessage( scintilla,
-                                           // SCI_GETSELECTIONSTART, 0, 0 ) );
-    // textSelectionEnd = static_cast<int>( SendMessage( scintilla,
-                                         // SCI_GETSELECTIONEND, 0, 0 ) );
-
     // get 'text' location
     curPos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
                                             0 ) );
@@ -577,10 +561,6 @@ void QuickText()
     if ( (endPos - startPos) > SZ_TAG )
         return;
 
-    // copy 'text' to tag
-    // SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
-    // SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
-    // SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
     Sci_TextRange tr;
 	tr.chrg.cpMin = startPos;
 	tr.chrg.cpMax = endPos;
@@ -625,11 +605,6 @@ void QuickText()
 
     if ( tagList.size() > 0 && ( endPos - startPos > 0 ) || ( ! g_bCharAdded && ! cQuickText.editing ))
     {
-        // restoring original selection
-        // SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
-        // SendMessage( scintilla, SCI_SETSELECTIONSTART, curPos, ( LPARAM )true );
-        // SendMessage( scintilla, SCI_SETSELECTIONEND, curPos, ( LPARAM )true );
-
         stringstream tagList_ss;
         TagList::const_iterator tagListEnd = tagList.end();
 
@@ -667,38 +642,15 @@ void QuickText()
         clear();
         string indent;
 
-        // if indenting is ON
-        // if ( Config.indenting )
-        // {
-            // get positions in text
-            // char temp[128];
-            Sci_Position lineNumber = static_cast<Sci_Position>( SendMessage( scintilla,
-                                               SCI_LINEFROMPOSITION, curPos, 0 ) );
-            // Sci_Position startline = static_cast<Sci_Position>( SendMessage( scintilla,
-                                              // SCI_POSITIONFROMLINE, lineNumber, 0 ) );
-            // // from start of line to start of tag
-            // SendMessage( scintilla, SCI_SETSELECTIONSTART, startline, 0 );
-            // SendMessage( scintilla, SCI_SETSELECTIONEND, startPos, 0 );
+        Sci_Position lineNumber = static_cast<Sci_Position>( SendMessage( scintilla,
+                                           SCI_LINEFROMPOSITION, curPos, 0 ) );
+        int nIndent = (int)::SendMessage( scintilla, SCI_GETLINEINDENTATION, lineNumber, 0 );
+        for (int i = 0; i < nIndent; i++)
+            indent += " ";
 
-            // int buffsize = (int)SendMessage( scintilla, SCI_GETSELTEXT, 0, 0 );
-            // char *temp = new char[buffsize + 1];
-            // SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )temp );
-
-            // indent = temp;
-
-            // // fix the indent
-            // unsigned i = static_cast<unsigned>( indent.find_first_not_of( " \t" ) );
-
-            // if ( i != static_cast<unsigned>( string::npos ) )
-                // indent.erase( i );
-
-            // // put it back
-            SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
-            SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
-        // // }
-            int nIndent = (int)::SendMessage( scintilla, SCI_GETLINEINDENTATION, lineNumber, 0 );
-            for (int i = 0; i < nIndent; i++)
-                indent += " ";
+        // put back original selection for replacing
+        SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
+        SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
 
         // decode key into value
         // tags within Current lang takes priority over Global language
@@ -706,8 +658,6 @@ void QuickText()
             decodeStr( tags[sLangType][tag], startPos, indent );
         else if ( tagInGlobalLang )
             decodeStr( tags[sLangTypeGlobal][tag], startPos, indent );
-
-        // delete temp;
 
         // replace it in scintilla
         SendMessage( scintilla, SCI_REPLACESEL, 0,
