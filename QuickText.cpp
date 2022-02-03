@@ -24,6 +24,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "PluginInterface.h"
 #include "menuCmdID.h"
 #include "resource.h"
+#include "Scintilla.h"
 #include "QuickText.h"
 
 #include "lib/INIMap.h"
@@ -243,7 +244,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
             {
                 if ( notifyCode->modificationType & SC_MOD_INSERTTEXT )
                 {
-                    for ( vector<int>::iterator i = cQuickText.hotSpotsPos.begin();
+                    for ( vector<Sci_Position>::iterator i = cQuickText.hotSpotsPos.begin();
                             i != cQuickText.hotSpotsPos.end(); i++ )
                         if ( *i > notifyCode->position )
                             ( *i ) += notifyCode->length;
@@ -251,7 +252,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
                     // 2019-03-23:MVINCENT: if current position is at the end
                     //   of inserted tag text then clear the tag hotspots else
                     //   inserted chars add to the overall length
-                    int currpos = static_cast<int>( SendMessage( getCurrentHScintilla(),
+                    Sci_Position currpos = static_cast<Sci_Position>( SendMessage( getCurrentHScintilla(),
                                                     SCI_GETCURRENTPOS, 0, 0 ) );
 
                     if ( currpos == cQuickText.hotSpotsPos[cQuickText.hotSpotsPos.size() - 1] )
@@ -268,7 +269,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
                         return;
                     }
 
-                    for ( vector<int>::iterator i = cQuickText.hotSpotsPos.begin();
+                    for ( vector<Sci_Position>::iterator i = cQuickText.hotSpotsPos.begin();
                             i != cQuickText.hotSpotsPos.end(); i++ )
                         if ( *i > notifyCode->position )
                             ( *i ) -= notifyCode->length;
@@ -282,7 +283,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
         // check if outside a hotspot
         case SCN_UPDATEUI:
         {
-            int currpos = static_cast<int>( SendMessage( getCurrentHScintilla(),
+            Sci_Position currpos = static_cast<Sci_Position>( SendMessage( getCurrentHScintilla(),
                                             SCI_GETCURRENTPOS, 0, 0 ) );
             bool r = true;
 
@@ -471,7 +472,7 @@ void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
     i = 0;
     while ( i < str.length() )
     {
-        i = str.find("\\n", i);
+        i = (unsigned)str.find("\\n", i);
         if ( i == static_cast<unsigned>(str.npos) )
             break;
         
@@ -500,7 +501,7 @@ void revStripBreaks( string &str )
 }
 
 // set cQuickText.text to substitution texts, setup hotspots hopping
-void decodeStr( cstring &str, int start, string &indent )
+void decodeStr( cstring &str, Sci_Position start, string &indent )
 {
     cQuickText.text = str;
     stripBreaks( cQuickText.text, true, indent );
@@ -544,9 +545,9 @@ void QuickText()
 {
     HWND scintilla = getCurrentHScintilla();
 
-    int curPos, startPos, endPos;
+    Sci_Position curPos, startPos, endPos;
     // int textSelectionStart, textSelectionEnd ;
-    char tag[256];
+    char tag[SZ_TAG + 1] = { 0 };
     LangType langtype;
     char sLangType[3];
     char sLangTypeGlobal[3];
@@ -567,18 +568,25 @@ void QuickText()
                                          // SCI_GETSELECTIONEND, 0, 0 ) );
 
     // get 'text' location
-    curPos = static_cast<int>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
+    curPos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
                                             0 ) );
-    startPos = static_cast<int>( SendMessage( scintilla, SCI_WORDSTARTPOSITION,
+    startPos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_WORDSTARTPOSITION,
                                               curPos, ( LPARAM )true ) );
-    endPos = static_cast<int>( SendMessage( scintilla, SCI_WORDENDPOSITION,
+    endPos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_WORDENDPOSITION,
                                             curPos, ( LPARAM )true ) );
+    if ( (endPos - startPos) > SZ_TAG )
+        return;
 
     // copy 'text' to tag
-    SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
-    SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
-    SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
-
+    // SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
+    // SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
+    // SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )tag );
+    Sci_TextRange tr;
+	tr.chrg.cpMin = startPos;
+	tr.chrg.cpMax = endPos;
+	tr.lpstrText = tag;
+    ::SendMessage( scintilla, SCI_GETTEXTRANGE, 0, (LPARAM)&tr );
+    
     if ( strlen( tag ) == 0 && !cQuickText.editing )
     {
         // Get current shortcut key (no modifiers necessary)
@@ -618,9 +626,9 @@ void QuickText()
     if ( tagList.size() > 0 && ( endPos - startPos > 0 ) || ( ! g_bCharAdded && ! cQuickText.editing ))
     {
         // restoring original selection
-        SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
-        SendMessage( scintilla, SCI_SETSELECTIONSTART, curPos, ( LPARAM )true );
-        SendMessage( scintilla, SCI_SETSELECTIONEND, curPos, ( LPARAM )true );
+        // SendMessage( scintilla, SCI_SETCURRENTPOS, curPos, 0 );
+        // SendMessage( scintilla, SCI_SETSELECTIONSTART, curPos, ( LPARAM )true );
+        // SendMessage( scintilla, SCI_SETSELECTIONEND, curPos, ( LPARAM )true );
 
         stringstream tagList_ss;
         TagList::const_iterator tagListEnd = tagList.end();
@@ -664,30 +672,33 @@ void QuickText()
         // {
             // get positions in text
             // char temp[128];
-            int lineNumber = static_cast<int>( SendMessage( scintilla,
+            Sci_Position lineNumber = static_cast<Sci_Position>( SendMessage( scintilla,
                                                SCI_LINEFROMPOSITION, curPos, 0 ) );
-            int startline = static_cast<int>( SendMessage( scintilla,
-                                              SCI_POSITIONFROMLINE, lineNumber, 0 ) );
-            // from start of line to start of tag
-            SendMessage( scintilla, SCI_SETSELECTIONSTART, startline, 0 );
-            SendMessage( scintilla, SCI_SETSELECTIONEND, startPos, 0 );
+            // Sci_Position startline = static_cast<Sci_Position>( SendMessage( scintilla,
+                                              // SCI_POSITIONFROMLINE, lineNumber, 0 ) );
+            // // from start of line to start of tag
+            // SendMessage( scintilla, SCI_SETSELECTIONSTART, startline, 0 );
+            // SendMessage( scintilla, SCI_SETSELECTIONEND, startPos, 0 );
 
-            int buffsize = (int)SendMessage( scintilla, SCI_GETSELTEXT, 0, 0 );
-            char *temp = new char[buffsize + 1];
-            SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )temp );
+            // int buffsize = (int)SendMessage( scintilla, SCI_GETSELTEXT, 0, 0 );
+            // char *temp = new char[buffsize + 1];
+            // SendMessage( scintilla, SCI_GETSELTEXT, 0, ( LPARAM )temp );
 
-            indent = temp;
+            // indent = temp;
 
-            // fix the indent
-            unsigned i = static_cast<unsigned>( indent.find_first_not_of( " \t" ) );
+            // // fix the indent
+            // unsigned i = static_cast<unsigned>( indent.find_first_not_of( " \t" ) );
 
-            if ( i != static_cast<unsigned>( string::npos ) )
-                indent.erase( i );
+            // if ( i != static_cast<unsigned>( string::npos ) )
+                // indent.erase( i );
 
-            // put it back
+            // // put it back
             SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
             SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
-        // }
+        // // }
+            int nIndent = (int)::SendMessage( scintilla, SCI_GETLINEINDENTATION, lineNumber, 0 );
+            for (int i = 0; i < nIndent; i++)
+                indent += " ";
 
         // decode key into value
         // tags within Current lang takes priority over Global language
@@ -696,7 +707,7 @@ void QuickText()
         else if ( tagInGlobalLang )
             decodeStr( tags[sLangTypeGlobal][tag], startPos, indent );
 
-        delete temp;
+        // delete temp;
 
         // replace it in scintilla
         SendMessage( scintilla, SCI_REPLACESEL, 0,
@@ -894,7 +905,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case LBN_SELCHANGE:
-                            int lang;
+                            size_t lang;
                             stringstream langss;
 
                             // Disable controls.
@@ -907,7 +918,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             SendMessage( ConfigWin.tag, LB_RESETCONTENT, 0, 0 );
 
                             // Get lang
-                            lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
+                            lang = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@TonyM: to treat number 255 from QuickText.ini as GLOBAL group.
                             if ( lang == ( lang_menu.size() - 1 ) )
@@ -932,7 +943,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     {
                         case LBN_SELCHANGE:
                         {
-                            int tag, lang;
+                            size_t tag, lang;
                             stringstream langss;
                             string quicktext;
                             char tag_s[SZ_TAG + 1];
@@ -944,13 +955,13 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             EnableWindow( ConfigWin.text, TRUE );
 
                             // Fetch the lang and tag.
-                            lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
+                            lang = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@TonyM: to treat number 255 from QuickText.ini as GLOBAL group.
                             if ( lang == ( lang_menu.size() - 1 ) )
                                 lang = 255;
 
-                            tag = ( int ) SendMessage( ConfigWin.tag, LB_GETCURSEL, 0, 0 );
+                            tag = ( size_t ) SendMessage( ConfigWin.tag, LB_GETCURSEL, 0, 0 );
 
                             // nothing selected.
                             if ( tag == LB_ERR )
@@ -1011,7 +1022,8 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case BN_CLICKED:
-                            int tag_Listbox_Index, language, newtag_index;
+                            int tag_Listbox_Index, newtag_index;
+                            size_t language;
                             char oldtag[SZ_TAG + 1];
                             char newtag[SZ_TAG + 1];
                             DWORD_PTR textLength = SendMessageA( ConfigWin.text, WM_GETTEXTLENGTH, 0,
@@ -1051,7 +1063,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                     size_t )textLength ) ) );
 
                             // get language
-                            language = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
+                            language = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@VinsWorldcom: to treat number 255 from QuickText.ini as GLOBAL group.
                             // https://github.com/vinsworldcom/nppQuickText/issues/10
@@ -1099,7 +1111,8 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case BN_CLICKED:
-                            int selectedTag, lang;
+                            int selectedTag;
+                            size_t lang;
                             char tagname[SZ_TAG + 1];
                             stringstream lang_ss;
                             string msg;
@@ -1119,7 +1132,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                           ( LPARAM ) tagname );
 
                             // Fetch the lang
-                            lang = ( int ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
+                            lang = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@VinsWorldcom: to treat number 255 from QuickText.ini as GLOBAL group.
                             // https://github.com/vinsworldcom/nppQuickText/issues/10
@@ -1160,7 +1173,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
     return FALSE;
 }
 // if tag doesn't exist, a tab should be outputted
-bool restoreKeyStroke( int cursorPos, HWND scintilla )
+bool restoreKeyStroke( Sci_Position cursorPos, HWND scintilla )
 {
     // restoring original selection
     SendMessage( scintilla, SCI_SETEMPTYSELECTION, cursorPos, 0 );

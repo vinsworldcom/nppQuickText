@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "Scintilla.h"
 #include "lib/INIMap.h"
 //////////////////////////////////////////////////////////////////////////
 /*
@@ -23,10 +24,10 @@ void openTagsFile();
 void jump( HWND );
 void clear();
 void loadConfig();
-bool restoreKeyStroke( int, HWND );
+bool restoreKeyStroke( Sci_Position, HWND );
 void stripBreaks( string &, bool, cstring & );
 void revStripBreaks( string & );
-void decodeStr( cstring &, int ,string & ); // Uses global var cQuickText.
+void decodeStr( cstring &, Sci_Position ,string & ); // Uses global var cQuickText.
 BOOL CALLBACK DlgConfigProc( HWND, UINT, WPARAM, LPARAM );
 
 //////////////////////////////////////////////////////////////////////////
@@ -37,8 +38,8 @@ BOOL CALLBACK DlgConfigProc( HWND, UINT, WPARAM, LPARAM );
 struct
 {
     string text;
-    vector<int> hotSpotsPos;
-    vector<int> hotSpotsLen;
+    vector<Sci_Position> hotSpotsPos;
+    vector<Sci_Position> hotSpotsLen;
     bool editing;
     /*unsigned*/ int cHotSpot; // Current HotSpot
 } cQuickText; // Current QuickText tag
