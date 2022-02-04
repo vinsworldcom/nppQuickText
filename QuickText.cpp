@@ -645,8 +645,21 @@ void QuickText()
         Sci_Position lineNumber = static_cast<Sci_Position>( SendMessage( scintilla,
                                            SCI_LINEFROMPOSITION, curPos, 0 ) );
         int nIndent = (int)::SendMessage( scintilla, SCI_GETLINEINDENTATION, lineNumber, 0 );
-        for (int i = 0; i < nIndent; i++)
-            indent += " ";
+        bool bTabs = (bool)::SendMessage( scintilla, SCI_GETUSETABS, 0, 0);
+        int tabWidth = (int)::SendMessage( scintilla, SCI_GETTABWIDTH, 0, 0);
+
+        if ( bTabs && tabWidth > 0 )
+        {
+            for (int i = 0; i < (int)nIndent/tabWidth; i++)
+                indent += "\t";
+            for (int i = 0; i < nIndent%tabWidth; i++)
+                indent += " ";
+        }
+        else
+        {
+            for (int i = 0; i < nIndent; i++)
+                indent += " ";
+        }
 
         // put back original selection for replacing
         SendMessage( scintilla, SCI_SETSELECTIONSTART, startPos, 0 );
