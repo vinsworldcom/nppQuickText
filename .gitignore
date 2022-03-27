@@ -1,6 +1,5 @@
 Debug
 Release
-tags
 .vs
 *.suo
 *.exp
@@ -8,5 +7,7 @@ tags
 *.iobj
 *.ipdb
 *.zip
-bin/*
-bin64/*
+tags
+Win32/*
+x64/*
+arm64/*
