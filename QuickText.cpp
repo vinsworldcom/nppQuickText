@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <commctrl.h>
 #include <intsafe.h>
 #include <shlwapi.h>
+#include <sstream>
 
 #include "PluginInterface.h"
 #include "menuCmdID.h"
@@ -28,8 +29,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "QuickText.h"
 
 #include "lib/INIMap.h"
-#include "lib/IniFile.h"
-#include "lib/QTString.h"
 
 #define NEW_HOTSPOT -1
 #define SZ_TAG 32
@@ -374,28 +373,16 @@ void _refreshINIFiles()
     std::string ini_file_path    = wstrtostr( confFilePath.c_str() );
     std::string ini_file_section = sectionName;
 
-    //+@TonyM: Reads allowedChars value from config file on each config refresh
-    std::string ini_allowedChars = CIniFile::GetValue( iniKeyAllowedChars,
-                                   ini_file_section, ini_file_path );
-    if ( !ini_allowedChars.empty() )
+    char ini_allowedChars[MAX_PATH];
+    ::GetPrivateProfileStringA( ini_file_section.c_str(), iniKeyAllowedChars, "", 
+                               ini_allowedChars, MAX_PATH, ini_file_path.c_str() );
+    if ( !( ini_allowedChars[0] == 0 ) )
         allowedChars = ini_allowedChars;
 
-    std::string useAutoC = CIniFile::GetValue( iniUseSciAutoC,
-                                     ini_file_section, ini_file_path );
-    if ( !useAutoC.empty() )
-    {
-        int val = std::stoi( useAutoC );
-        if ( val != 0 )
-            g_bUseSciAutoC = true;
-    }
-    std::string doAutoC = CIniFile::GetValue( iniInsertOnAutoC,
-                                     ini_file_section, ini_file_path );
-    if ( !doAutoC.empty() )
-    {
-        int val = std::stoi( doAutoC );
-        if ( val != 0 )
-            g_bInsertOnAutoC = true;
-    }
+    g_bUseSciAutoC = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniUseSciAutoC,
+                                             0, ini_file_path.c_str() );
+    g_bInsertOnAutoC = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniInsertOnAutoC,
+                                             0, ini_file_path.c_str() );
 
     int i = 0;
     TCHAR langName[MAX_PATH];

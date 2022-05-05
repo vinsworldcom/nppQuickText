@@ -251,15 +251,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="lib\IniFile.cpp" />
     <ClCompile Include="lib\INIMap.cpp" />
-    <ClCompile Include="lib\QTString.cpp" />
     <ClCompile Include="QuickText.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lib\IniFile.h" />
     <ClInclude Include="lib\INIMap.h" />
-    <ClInclude Include="lib\QTString.h" />
     <ClInclude Include="menuCmdID.h" />
     <ClInclude Include="Notepad_plus_msgs.h" />
     <ClInclude Include="PluginInterface.h" />
