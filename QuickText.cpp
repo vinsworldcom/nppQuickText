@@ -48,6 +48,7 @@ const char iniKeyAllowedChars[] = "AllowedChars";
 const char iniUseSciAutoC[]     = "UseSciAutoC";
 const char iniInsertOnAutoC[]   = "InsertOnAutoC";
 const char iniFixedFont[]       = "FixedFont";
+const char iniConfirmClose[]    = "ConfirmClose";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
@@ -55,6 +56,7 @@ FuncItem funcItems[nbFunc];
 bool g_bInsertOnAutoC = false;
 bool g_bUseSciAutoC   = false;
 bool g_bFixedFont     = false;
+bool g_bConfirmClose  = false;
 bool g_bCharAdded     = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
@@ -112,6 +114,8 @@ void pluginCleanUp()
                                  g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniFixedFont,
                                  g_bFixedFont ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniConfirmClose,
+                                 g_bConfirmClose ? "1" : "0", ini_file_path.c_str() );
 }
 
 // *** Main
@@ -391,6 +395,8 @@ void _refreshINIFiles()
                                              0, ini_file_path.c_str() );
     g_bFixedFont = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniFixedFont,
                                              0, ini_file_path.c_str() );
+    g_bConfirmClose = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniConfirmClose,
+                                             1, ini_file_path.c_str() );
 
     int i = 0;
     TCHAR langName[MAX_PATH];
@@ -760,6 +766,8 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                          ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_FF  ), BM_SETCHECK,
                          ( WPARAM )( g_bFixedFont ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CBC  ), BM_SETCHECK,
+                         ( WPARAM )( g_bConfirmClose ? 1 : 0 ), 0 );
 
             if ( g_bFixedFont )
                 ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "Courier New" );
@@ -811,14 +819,18 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                 {
                     BOOL exiting = true;
 
-                    // if modified, asking to save
-                    if ( ConfigWin.changed == true &&
-                            MessageBox( hwndDlg, _T( "Do you want to save changes?" ), _T( "Warning" ),
-                                        MB_YESNO | MB_ICONWARNING ) )
+
+                    if ( g_bConfirmClose )
                     {
-                        // add tag/substitution to DB before exiting
-                        exiting = DlgConfigProc( hwndDlg, ( UINT ) WM_COMMAND,
-                                                 ( WPARAM )( ( BN_CLICKED << 16 ) | ( IDADD ) ), 0 );
+                        // if modified, asking to save
+                        if ( ConfigWin.changed == true && 
+                                MessageBox( hwndDlg, _T( "Do you want to save changes?" ), _T( "Warning" ),
+                                            MB_YESNO | MB_ICONWARNING ) )
+                        {
+                            // add tag/substitution to DB before exiting
+                            exiting = DlgConfigProc( hwndDlg, ( UINT ) WM_COMMAND,
+                                                     ( WPARAM )( ( BN_CLICKED << 16 ) | ( IDADD ) ), 0 );
+                        }
                     }
 
                     if ( exiting == TRUE )
@@ -833,7 +845,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                 }
 
                 case IDCANCEL:
-                    if ( ConfigWin.changed )
+                    if ( ConfigWin.changed && g_bConfirmClose )
                     {
                         if ( MessageBox( hwndDlg, _T( "Are you sure you want to discard changes?" ),
                                          _T( "Warning" ), MB_YESNO | MB_ICONWARNING ) == IDYES )
@@ -885,6 +897,19 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         g_bFixedFont = false;
                         ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "MS Shell Dlg" );
                     }
+
+                    return TRUE;
+                }
+
+                case IDC_CHK_CBC:
+                {
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CBC ),
+                                                      BM_GETCHECK, 0, 0 );
+
+                    if ( check & BST_CHECKED )
+                        g_bConfirmClose = true;
+                    else
+                        g_bConfirmClose = false;
 
                     return TRUE;
                 }
