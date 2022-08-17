@@ -830,6 +830,16 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
         }
         break;
 
+        case WM_SIZE:
+        {
+            RECT rc = { 0 };
+            GetClientRect( hwndDlg, &rc );
+            SetWindowPos( ConfigWin.text, NULL,
+                          330, 72, rc.right - 342, rc.bottom - 83,
+                          SWP_NOZORDER | SWP_SHOWWINDOW );
+            return FALSE;
+        }
+
         case WM_NOTIFY:
         {
             switch (((LPNMHDR)lParam)->code)
