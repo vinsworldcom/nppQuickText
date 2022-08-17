@@ -37,7 +37,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 // *** Plugin specific variables
 const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
-const int nbFunc = 7; 
+const int nbFunc = 7;
 
 const TCHAR confFileName[]    = TEXT( "QuickText.conf.ini" );
 const TCHAR dataFileName[]    = TEXT( "QuickText.ini" );
@@ -48,14 +48,19 @@ const char iniKeyAllowedChars[] = "AllowedChars";
 const char iniUseSciAutoC[]     = "UseSciAutoC";
 const char iniInsertOnAutoC[]   = "InsertOnAutoC";
 const char iniFixedFont[]       = "FixedFont";
+const char iniUseNppColors[]    = "UseNppColors";
 const char iniConfirmClose[]    = "ConfirmClose";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
 
+COLORREF colorBg;
+COLORREF colorFg;
+
 bool g_bInsertOnAutoC = false;
 bool g_bUseSciAutoC   = false;
 bool g_bFixedFont     = false;
+bool g_bNppColors     = false;
 bool g_bConfirmClose  = false;
 bool g_bCharAdded     = false;
 
@@ -114,6 +119,8 @@ void pluginCleanUp()
                                  g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniFixedFont,
                                  g_bFixedFont ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniUseNppColors,
+                                 g_bNppColors ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniConfirmClose,
                                  g_bConfirmClose ? "1" : "0", ini_file_path.c_str() );
 }
@@ -384,7 +391,7 @@ void _refreshINIFiles()
     std::string ini_file_section = sectionName;
 
     char ini_allowedChars[MAX_PATH];
-    ::GetPrivateProfileStringA( ini_file_section.c_str(), iniKeyAllowedChars, "", 
+    ::GetPrivateProfileStringA( ini_file_section.c_str(), iniKeyAllowedChars, "",
                                ini_allowedChars, MAX_PATH, ini_file_path.c_str() );
     if ( !( ini_allowedChars[0] == 0 ) )
         allowedChars = ini_allowedChars;
@@ -394,6 +401,8 @@ void _refreshINIFiles()
     g_bInsertOnAutoC = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniInsertOnAutoC,
                                              0, ini_file_path.c_str() );
     g_bFixedFont = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniFixedFont,
+                                             0, ini_file_path.c_str() );
+    g_bNppColors = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniUseNppColors,
                                              0, ini_file_path.c_str() );
     g_bConfirmClose = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniConfirmClose,
                                              1, ini_file_path.c_str() );
@@ -406,7 +415,7 @@ void _refreshINIFiles()
         SendMessage( nppData._nppHandle, NPPM_GETLANGUAGENAME, i, ( LPARAM ) langName );
         lang_menu.push_back( wstrtostr( langName ));
         i++;
-    } while ( ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 ) 
+    } while ( ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 )
            && ( i < 255 ) );
     lang_menu.push_back( "GLOBAL" );
 }
@@ -467,7 +476,7 @@ void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
         i = (unsigned)str.find("\\n", i);
         if ( i == static_cast<unsigned>(str.npos) )
             break;
-        
+
         if ( ( i == 0 ) || ( ( i > 0 ) && ( str.at( i - 1 ) != '\\' ) ) )
         {
             str.erase( i, 2 );
@@ -567,7 +576,7 @@ void QuickText()
 	tr.chrg.cpMax = endPos;
 	tr.lpstrText = tag;
     ::SendMessage( scintilla, SCI_GETTEXTRANGE, 0, (LPARAM)&tr );
-    
+
     if ( strlen( tag ) == 0 && !cQuickText.editing )
     {
         // Get current shortcut key (no modifiers necessary)
@@ -739,7 +748,28 @@ void ChangeFont( HWND hwnd, int iHeight, int iWidth, LPCSTR fontName )
     DeleteObject( hFont );
 }
 
-BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
+void SetNppColors()
+{
+    colorBg = ( COLORREF )::SendMessage( getCurrentHScintilla(), SCI_STYLEGETBACK, 0, 0 );
+    colorFg = ( COLORREF )::SendMessage( getCurrentHScintilla(), SCI_STYLEGETFORE, 0, 0 );
+}
+
+void SetSysColors()
+{
+    colorBg = GetSysColor( COLOR_WINDOW );
+    colorFg = GetSysColor( COLOR_WINDOWTEXT );
+}
+
+void ChangeColors()
+{
+    SendMessage(ConfigWin.tag, WM_SETREDRAW, TRUE, 0);
+    RedrawWindow(ConfigWin.tag, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
+
+    SendMessage(ConfigWin.text, WM_SETREDRAW, TRUE, 0);
+    RedrawWindow(ConfigWin.text, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
+}
+
+LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                              LPARAM lParam )
 {
     switch ( message )
@@ -766,8 +796,16 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                          ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_FF  ), BM_SETCHECK,
                          ( WPARAM )( g_bFixedFont ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_NPC ), BM_SETCHECK,
+                         ( WPARAM )( g_bNppColors ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CBC  ), BM_SETCHECK,
                          ( WPARAM )( g_bConfirmClose ? 1 : 0 ), 0 );
+
+            if ( g_bNppColors )
+                SetNppColors();
+            else
+                SetSysColors();
+            ChangeColors();
 
             if ( g_bFixedFont )
                 ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "Courier New" );
@@ -812,18 +850,31 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             break;
         }
 
+        case WM_CTLCOLORLISTBOX:
+        case WM_CTLCOLOREDIT:
+        {
+            if ( lParam == (LPARAM)ConfigWin.text || lParam == (LPARAM)ConfigWin.tag )
+            {
+                SetTextColor((HDC)wParam, colorFg);
+                SetBkColor((HDC)wParam, colorBg);
+                SetDCBrushColor((HDC)wParam, colorBg);
+                return (LRESULT) GetStockObject(DC_BRUSH); // return a DC brush.
+            }
+            break;
+        }
+
         case WM_COMMAND:
             switch ( LOWORD( wParam ) )
             {
                 case IDOK:
                 {
-                    BOOL exiting = true;
+                    LRESULT exiting = true;
 
 
                     if ( g_bConfirmClose )
                     {
                         // if modified, asking to save
-                        if ( ConfigWin.changed == true && 
+                        if ( ConfigWin.changed == true &&
                                 MessageBox( hwndDlg, _T( "Do you want to save changes?" ), _T( "Warning" ),
                                             MB_YESNO | MB_ICONWARNING ) )
                         {
@@ -898,6 +949,26 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "MS Shell Dlg" );
                     }
 
+                    return TRUE;
+                }
+
+                case IDC_CHK_NPC:
+                {
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_NPC ),
+                                                      BM_GETCHECK, 0, 0 );
+
+                    if ( check & BST_CHECKED )
+                    {
+                        SetNppColors();
+                        g_bNppColors = true;
+                    }
+                    else
+                    {
+                        SetSysColors();
+                        g_bNppColors = false;
+                    }
+
+                    ChangeColors();
                     return TRUE;
                 }
 
@@ -1013,7 +1084,7 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                     return TRUE;
                 }
-                
+
                 case IDTAGNAME:
                 {
                     switch ( HIWORD( wParam ) )

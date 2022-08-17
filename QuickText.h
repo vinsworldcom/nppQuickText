@@ -28,7 +28,10 @@ bool restoreKeyStroke( Sci_Position, HWND );
 void stripBreaks( string &, bool, cstring & );
 void revStripBreaks( string & );
 void decodeStr( cstring &, Sci_Position ,string & ); // Uses global var cQuickText.
-BOOL CALLBACK DlgConfigProc( HWND, UINT, WPARAM, LPARAM );
+void SetNppColors( void );
+void SetSysColors( void );
+void ChangeColors( void );
+LRESULT CALLBACK DlgConfigProc( HWND, UINT, WPARAM, LPARAM );
 
 //////////////////////////////////////////////////////////////////////////
 /*
