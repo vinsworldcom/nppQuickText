@@ -32,6 +32,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #define NEW_HOTSPOT -1
 #define SZ_TAG 32
+#define FONT_HEIGHT -12
+#define FONT_WIDTH   -8
 
 // *** Plugin specific variables
 const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
@@ -45,13 +47,15 @@ const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "AllowedChars";
 const char iniUseSciAutoC[]     = "UseSciAutoC";
 const char iniInsertOnAutoC[]   = "InsertOnAutoC";
+const char iniFixedFont[]       = "FixedFont";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
 
 bool g_bInsertOnAutoC = false;
-bool g_bUseSciAutoC = false;
-bool g_bCharAdded = false;
+bool g_bUseSciAutoC   = false;
+bool g_bFixedFont     = false;
+bool g_bCharAdded     = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
 std::string allowedChars =
@@ -106,6 +110,8 @@ void pluginCleanUp()
                                  g_bUseSciAutoC ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniInsertOnAutoC,
                                  g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniFixedFont,
+                                 g_bFixedFont ? "1" : "0", ini_file_path.c_str() );
 }
 
 // *** Main
@@ -382,6 +388,8 @@ void _refreshINIFiles()
     g_bUseSciAutoC = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniUseSciAutoC,
                                              0, ini_file_path.c_str() );
     g_bInsertOnAutoC = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniInsertOnAutoC,
+                                             0, ini_file_path.c_str() );
+    g_bFixedFont = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniFixedFont,
                                              0, ini_file_path.c_str() );
 
     int i = 0;
@@ -718,6 +726,13 @@ void loadConfig()
     return;
 }
 
+void ChangeFont( HWND hwnd, int iHeight, int iWidth, LPCSTR fontName )
+{
+    HFONT hFont = CreateFontA(iHeight, iWidth, 0, 0, FW_NORMAL, false, false, false, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, fontName);
+    SendMessage( hwnd, WM_SETFONT, ( WPARAM )hFont, true);
+    DeleteObject( hFont );
+}
+
 BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                              LPARAM lParam )
 {
@@ -743,6 +758,13 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                          ( WPARAM )( g_bUseSciAutoC ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_SETCHECK,
                          ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_FF  ), BM_SETCHECK,
+                         ( WPARAM )( g_bFixedFont ? 1 : 0 ), 0 );
+
+            if ( g_bFixedFont )
+                ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "Courier New" );
+            else
+                ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "MS Shell Dlg" );
 
             int numberOfLang;
             ULongPtrToInt ( lang_menu.size(), &numberOfLang );
@@ -844,6 +866,25 @@ BOOL CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         g_bInsertOnAutoC = true;
                     else
                         g_bInsertOnAutoC = false;
+
+                    return TRUE;
+                }
+
+                case IDC_CHK_FF:
+                {
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_FF ),
+                                                      BM_GETCHECK, 0, 0 );
+
+                    if ( check & BST_CHECKED )
+                    {
+                        g_bFixedFont = true;
+                        ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "Courier New" );
+                    }
+                    else
+                    {
+                        g_bFixedFont = false;
+                        ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "MS Shell Dlg" );
+                    }
 
                     return TRUE;
                 }
