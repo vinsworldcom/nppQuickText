@@ -1074,7 +1074,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             SendMessageA( ConfigWin.tagname, WM_SETTEXT, 0, ( LPARAM ) tag_s );
                             SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) quicktext.c_str() );
                             ConfigWin.changed = false;
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Modify" );
+                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "&Modify" );
 
                             break;
                         }
