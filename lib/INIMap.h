@@ -32,10 +32,10 @@
 using namespace std;
 using namespace std::tr1;
 
-typedef const string cstring;
-typedef map<string, string> keymap;
-typedef map<string, keymap> inimap;
-typedef vector<string> SnipList;
+typedef const wstring cstring;
+typedef map<wstring, wstring> keymap;
+typedef map<wstring, keymap> inimap;
+typedef vector<wstring> SnipList;
 
 class INIMap
 {
@@ -45,17 +45,17 @@ class INIMap
         INIMap ();
         virtual ~INIMap ();
         virtual bool ReadFile ( const TCHAR *filename );
-        virtual bool WriteFile ( const TCHAR *filename, vector<string> lang_menu ) const;
+        virtual bool WriteFile ( const TCHAR *filename, vector<wstring> lang_menu ) const;
         virtual keymap &operator[]( cstring &section );
-        virtual keymap &operator[]( const char *section );
+        virtual keymap &operator[]( const TCHAR *section );
         virtual bool Exists( cstring &section ) const;
         virtual bool Exists( cstring &section, cstring &snip ) const;
         virtual bool DeleteSection ( cstring &section );
         virtual bool DeleteKey( cstring &section, cstring &key );
         virtual void Clear();
         virtual bool FileExists( const TCHAR *filename );
-        // query for a list of matching snip with input string
-        virtual vector<string> querySnips( cstring &section, cstring &key );
+        // query for a list of matching Snip with input wstring
+        virtual vector<wstring> querySnips( cstring &section, cstring &key );
 };
 
 #endif

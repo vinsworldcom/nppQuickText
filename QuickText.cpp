@@ -447,7 +447,7 @@ void replaceTabs( string &str )
 }
 
 // Strip all the line breaks
-void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
+void stripBreaks( wstring &str, bool doc = false, cstring &indent = TEXT("") )
 {
     char newline[3] = "\r\n";
 

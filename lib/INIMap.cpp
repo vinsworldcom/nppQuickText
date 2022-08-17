@@ -30,7 +30,7 @@ INIMap::~INIMap ()
 // check if a file exists by checking attribute of a file
 bool INIMap::FileExists( const TCHAR *filename )
 {
-    ifstream f;
+    wifstream f;
     f.open( filename );
 
     if ( !f )
@@ -69,31 +69,31 @@ bool INIMap::ReadFile ( const TCHAR *filename )
 */
 
     // reading config files
-    ifstream configFile;
+    wifstream configFile;
     configFile.open( filename );
 
     if ( !configFile )
         return false;
 
-    string lineBuffer;
-    vector<string> curSections; // Current section
+    wstring lineBuffer;
+    vector<wstring> curSections; // Current section
 
     while ( getline( configFile, lineBuffer ) )
     {
-        cmatch matchResults;
-        regex snipNumberMatch( "\\[([\\d]+)\\]" ); // matching [(1)], [(2)] and etc.
+        wcmatch matchResults;
+        wregex snipNumberMatch( TEXT("\\[([\\d]+)\\]") ); // matching [(1)], [(2)] and etc.
         // 2019-03-22:MVINCENT: snipAndSubstitutionTextMatch not used
         //     the noComment is useful to not match the LANGUAGE_NAME prefix
         //     which can add documentation / comments to the INI file
 //      regex snipAndSubstitutionTextMatch("([^=]+)=([\\S]+)"); // match (a)=(<a> </a>)
-        regex noComment( "^#LANGUAGE_NAME" ); // match "comments"
+        wregex noComment( TEXT("^#LANGUAGE_NAME") ); // match "comments"
 
         // e.g. [1]
         // parsing snip number
         if ( regex_search( lineBuffer.c_str(), matchResults, snipNumberMatch ) )
         {
             curSections.clear();
-            string snipNumber = matchResults[1];
+            wstring snipNumber = matchResults[1];
 
             if ( snipNumber.length() == 0 )
                 return false;
@@ -106,7 +106,7 @@ bool INIMap::ReadFile ( const TCHAR *filename )
             if ( curSections.size() == 0 )
                 return false;
 
-            //curSection = string(buffer, s1+1, s2-s1-1);
+            //curSection = wstring(buffer, s1+1, s2-s1-1);
             //if (curSection.c_str() == "") return false;
         }
         // e.g. if=if ()
@@ -114,12 +114,12 @@ bool INIMap::ReadFile ( const TCHAR *filename )
         else if ( ! regex_search( lineBuffer.c_str(), matchResults, noComment ) )
         {
 
-            string::size_type equalSignIndex = lineBuffer.find( '=' );
+            wstring::size_type equalSignIndex = lineBuffer.find( '=' );
 
-            if ( equalSignIndex != string::npos )
+            if ( equalSignIndex != wstring::npos )
             {
-                string snipName = string( lineBuffer.substr( 0, equalSignIndex ) );
-                string substitutionText = string( lineBuffer.substr( equalSignIndex + 1 ) );
+                wstring snipName = wstring( lineBuffer.substr( 0, equalSignIndex ) );
+                wstring substitutionText = wstring( lineBuffer.substr( equalSignIndex + 1 ) );
 
                 //if (curSection.c_str() == "" || k.c_str() == "" || d.c_str() == "") return false;
                 //if (curSections.size() == 0 || snipName.c_str() == "" || substitutionText.c_str() == "")
@@ -127,7 +127,7 @@ bool INIMap::ReadFile ( const TCHAR *filename )
                         || substitutionText.empty() )
                     return false;
 
-                for ( vector<string>::const_iterator i = curSections.begin();
+                for ( vector<wstring>::const_iterator i = curSections.begin();
                         i != curSections.end(); i++ )
                     data[*i][snipName] = substitutionText;
             }
@@ -138,12 +138,12 @@ bool INIMap::ReadFile ( const TCHAR *filename )
     return true;
 }
 
-bool INIMap::WriteFile ( const TCHAR *filename, vector<string> lang_menu) const
+bool INIMap::WriteFile ( const TCHAR *filename, vector<wstring> lang_menu) const
 {
     if ( !filename || !filename[0] )
         return false;
 
-    ofstream f;
+    wofstream f;
     f.open( filename );
 
     if ( !f )
@@ -154,16 +154,16 @@ bool INIMap::WriteFile ( const TCHAR *filename, vector<string> lang_menu) const
         if ( i->second.begin() == i->second.end() )
             continue;
 
-        f << '[' << i->first << ']' << endl;
+        f << TEXT( '[' ) << i->first << TEXT( ']' ) << endl;
         int lang = std::stoi( i->first );
         if ( lang == 255 )
             lang = ( int ) lang_menu.size() - 1;
 
-        f << "#LANGUAGE_NAME=" << lang_menu[lang] << endl;
+        f << TEXT( "#LANGUAGE_NAME=" ) << lang_menu[lang] << endl;
 
         for ( keymap::const_iterator j = i->second.begin(); j != i->second.end();
                 j++ )
-            f << j->first << '=' << j->second << endl;
+            f << j->first << TEXT( '=' ) << j->second << endl;
         f << endl;
     }
 
@@ -175,9 +175,9 @@ keymap &INIMap::operator[]( cstring &section )
     return data[section];
 }
 
-keymap &INIMap::operator[]( const char *section )
+keymap &INIMap::operator[]( const TCHAR *section )
 {
-    return data[string( section )];
+    return data[wstring( section )];
 }
 
 bool INIMap::DeleteSection ( cstring &section )
@@ -234,10 +234,10 @@ bool INIMap::Exists( cstring &section, cstring &snip ) const
 SnipList INIMap::querySnips( cstring &section, cstring &snip )
 {
     SnipList snipList;
-    cmatch matchResults;
+    wcmatch matchResults;
     //+@TonyM: "([\\S]*" + snip + "([\\S]*)" -> "^" + snip + "([\\S]*)"
-    regex snipsRegex( "^" + snip +
-                     "([\\S]*)" ); // match any string with snip as substring
+    wregex snipsRegex( TEXT( "^" ) + snip +
+                     TEXT( "([\\S]*)" ) ); // match any string with snip as substring
 
     // use regex to match string
     if ( Exists( section ) )

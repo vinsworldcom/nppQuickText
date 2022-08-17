@@ -12,7 +12,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 using namespace std;
-typedef const string cstring;
+typedef const wstring cstring;
 
 void QuickText();
 HWND getCurrentHScintilla();
