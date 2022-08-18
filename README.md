@@ -121,9 +121,11 @@ To make you're own tags:
   + `$` hotspots
   + `\$` for literal '$'
   + `\n` for line break
-  + `\\n` for literal '\n'
 
-Or just use the Options GUI.
+When using the Settings "Substitution Text" GUI:
+
+  + `\\n` for literal '\n'
+  + `Ctrl+Tab` for literal Tab
 
 ## Example
 
