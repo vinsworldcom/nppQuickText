@@ -102,6 +102,13 @@ Use to configure Tags for languages.
 + **Auto Insert Autocomplete**: when a tag is completed from a Scintilla 
   autocompletion, expand the tag.  Without this enabled, you need to trigger 
   the Replace Tag hotkey again to expand the Tag.
++ **Use Fixed Font**: use a fixed-width font (Courier New) in the 
+  "Substitution Text" text box.
++ **Use N++ Colors**: use Notepad++ background and "Default Style" text colors 
+  in the "Tags" and "Substitution Text" list and edit boxes.
++ **Confirm before close**: use message box prompts to confirm actions before 
+  closing the Settings dialog with the "OK" and "Cancel" buttons if potential 
+  changes.
 
 To make you're own tags:
 
@@ -111,9 +118,10 @@ To make you're own tags:
   Language.  See LANGUAGE CODES.
 + Then, for the key of the tag, use only lower/upper case and numbers.
 + Special chars:
-  + $ hotspots
-  + \\$ for writing actual '$'
-  + \n break line.
+  + `$` hotspots
+  + `\$` for literal '$'
+  + `\n` for line break
+  + `\\n` for literal '\n'
 
 Or just use the Options GUI.
 
