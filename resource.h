@@ -31,11 +31,11 @@
 #define IDD_DLGCONFIG                   101
 #define IDLANG                          1002
 #define IDTEXT                          1003
-#define IDTAG                           1004
+#define IDSNIP                          1004
 #define IDADDMOD                        1005
 #define IDADD                           1005
 #define IDDEL                           1006
-#define IDTAGNAME                       1008
+#define IDSNIPNAME                      1008
 #define IDLANG_CB                       1011
 #define IDSMARTEDIT                     1017
 #define IDC_EDIT1                       1018

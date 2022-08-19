@@ -20,7 +20,7 @@ std::string wstrtostr( const std::wstring & );
 void _refreshINIFiles();
 void refreshINIMap();
 void openConfigFile();
-void openTagsFile();
+void openSnipsFile();
 void jump( HWND );
 void clear();
 void loadConfig();
@@ -46,7 +46,7 @@ struct
     vector<Sci_Position> hotSpotsLen;
     bool editing;
     /*unsigned*/ int cHotSpot; // Current HotSpot
-} cQuickText; // Current QuickText tag
+} cQuickText; // Current QuickText snip
 
 struct
 {
@@ -55,14 +55,14 @@ struct
 
 struct
 {
-    HWND langCB, tag, text, add, del, tagname;
+    HWND langCB, snip, text, add, del, snipname;
     bool changed;
 } ConfigWin;
 
 HINSTANCE appInstance;
 
 // *** Variables
-INIMap tags, tags_replica;
-basic_string<TCHAR> tagsFileName;
+INIMap snips, snips_replica;
+basic_string<TCHAR> snipsFileName;
 
 #endif

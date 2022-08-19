@@ -76,32 +76,32 @@ to the Notepad++ plugins folder:
 
 ## Usage
 
-Assign a shortcut key to the Plugins => QuickText => Replace Tag menu to 
-use QuickText tags from within the current Notepad++ document.
+Assign a shortcut key to the Plugins => QuickText => Replace Snip menu to 
+use QuickText snips from within the current Notepad++ document.
 
-If the Replace Tag hotkey is used and there is no text before it or
-no valid expansion for the text before it, the Replace Tag hotkey
-character is inserted.  For example, using "Tab" as the key with
-no valid expansion just inserts a tab (as if Tab key press).
+If the "Replace Snip" hotkey is used and there is no text before it or
+no valid expansion for the text before it, the "Replace Snip" hotkey
+character is inserted.  For example, using `Tab` as the key with
+no valid expansion just inserts a tab (as if `Tab` key press).
 
-Once a Tag is inserted, you can use the Replace Tag hotkey again and 
-again to navigate through the hotspots in the inserted Tag snippet.
+Once a snip is inserted, you can use the "Replace Snip" hotkey again and 
+again to navigate through the hotspots in the inserted snippet.
 
-**NOTE:**  Tab can now be used again as the Replace Tag hotkey.
+**NOTE:**  `Tab` can now be used again as the "Replace Snip" hotkey.
            There is no default.
 
 ## Customization
 
 Settings:
 
-Use to configure Tags for languages.
+Use to configure Snips for languages.
 + **Use Scintilla Autocomplete**: uses Scintilla autocomplete while typing to 
-  suggest tags for the current language.  Without this enabled, you need to 
-  trigger the Replace Tag hotkey to get the autocomplete list or just type 
-  a Tag from memory.
-+ **Auto Insert Autocomplete**: when a tag is completed from a Scintilla 
-  autocompletion, expand the tag.  Without this enabled, you need to trigger 
-  the Replace Tag hotkey again to expand the Tag.
+  suggest snips for the current language.  Without this enabled, you need to 
+  trigger the "Replace Snip" hotkey to get the autocomplete list or just type 
+  a snip from memory.
++ **Auto Insert Autocomplete**: when a snip is completed from a Scintilla 
+  autocompletion, expand the snip.  Without this enabled, you need to trigger 
+  the "Replace Snip" hotkey again to expand the snip.
 + **Convert Tabs (N++ setting)**: convert any `Tab` characters in the 
   "Substitution Text" to spaces based on Notepad++ settings for the current 
   language.  If Notepad++ does not replace tabs for the current language, this 
@@ -110,18 +110,18 @@ Use to configure Tags for languages.
 + **Use Fixed Font**: use a fixed-width font (Courier New) in the 
   "Substitution Text" text box.
 + **Use N++ Colors**: use Notepad++ background and "Default Style" text colors 
-  in the "Tags" and "Substitution Text" list and edit boxes.
+  in the "Snips" and "Substitution Text" list and edit boxes.
 + **Confirm before close**: use message box prompts to confirm actions before 
   closing the Settings dialog with the "OK" and "Cancel" buttons if potential 
   changes.
 
-To make you're own tags:
+To make you're own snips:
 
-+ Tags file (QuickText.ini) *MUST* use "Windows (CR LF)" line endings.
-+ First make sure the tag's Language Section already exists. This is 
++ Snips file (QuickText.ini) *MUST* use "Windows (CR LF)" line endings.
++ First make sure the snip's Language Section already exists. This is 
   done by creating a new section with the code corresponding to the 
   Language.  See LANGUAGE CODES.
-+ Then, for the key of the tag, use only lower/upper case and numbers.
++ Then, for the key of the snip, use only lower/upper case and numbers.
 + Special chars:
   + `$` hotspots
   + `\$` for literal '$'

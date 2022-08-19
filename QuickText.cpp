@@ -1,4 +1,4 @@
-/* QuickText - Quick editing tags for Notepad++
+/* QuickText - Quick editing snips for Notepad++
 Copyright (C) 2006  Joao Moreno (alph.pt@gmail.com)
 
 This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "lib/INIMap.h"
 
 #define NEW_HOTSPOT -1
-#define SZ_TAG 32
+#define SZ_SNIP 32
 #define FONT_HEIGHT -12
 #define FONT_WIDTH   -8
 
@@ -172,10 +172,10 @@ void commandMenuInit()
     PathAppend( get_confFilePath, confFileName );
     PathAppend( get_dataFilePath, dataFileName );
     confFilePath = get_confFilePath;
-    tagsFileName = get_dataFilePath;
+    snipsFileName = get_dataFilePath;
 
     // Move data file to plugins/config if not there
-    if ( ! PathFileExists( tagsFileName.c_str() ) )
+    if ( ! PathFileExists( snipsFileName.c_str() ) )
     {
         TCHAR temp[MAX_PATH];
         basic_string<TCHAR> defaultDbTile;
@@ -190,21 +190,21 @@ void commandMenuInit()
 
         if ( PathFileExists( defaultDbTile.c_str() ) )
         {
-            CopyFile( defaultDbTile.c_str(), tagsFileName.c_str(), true );
+            CopyFile( defaultDbTile.c_str(), snipsFileName.c_str(), true );
         }
     }
 
     // funcItems setting
     funcItems[0]._pFunc = QuickText;
-    lstrcpy( funcItems[0]._itemName, _T( "&Replace Tag" ) );
+    lstrcpy( funcItems[0]._itemName, _T( "&Replace Snip" ) );
     funcItems[0]._init2Check = false;
 
     funcItems[1]._pFunc = NULL;
     lstrcpy( funcItems[1]._itemName, _T( "-SEPARATOR-" ) );
     funcItems[1]._init2Check = false;
 
-    funcItems[2]._pFunc = openTagsFile;
-    lstrcpy( funcItems[2]._itemName, _T( "Open &Tags File" ) );
+    funcItems[2]._pFunc = openSnipsFile;
+    lstrcpy( funcItems[2]._itemName, _T( "&Open Snips File" ) );
     funcItems[2]._init2Check = false;
 
     funcItems[3]._pFunc = openConfigFile;
@@ -270,7 +270,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
                             ( *i ) += notifyCode->length;
 
                     // 2019-03-23:MVINCENT: if current position is at the end
-                    //   of inserted tag text then clear the tag hotspots else
+                    //   of inserted snip text then clear the snip hotspots else
                     //   inserted chars add to the overall length
                     Sci_Position currpos = static_cast<Sci_Position>( SendMessage( getCurrentHScintilla(),
                                                     SCI_GETCURRENTPOS, 0, 0 ) );
@@ -388,8 +388,8 @@ std::string wstrtostr( const std::wstring &wstr )
 //+@TonyM: MessageBox with confirmation of INI files reload on the start of Notepad++.
 void _refreshINIFiles()
 {
-    tags.Clear();
-    tags.ReadFile( tagsFileName.c_str() );
+    snips.Clear();
+    snips.ReadFile( snipsFileName.c_str() );
 
     std::string ini_file_path    = wstrtostr( confFilePath.c_str() );
     std::string ini_file_section = sectionName;
@@ -441,10 +441,10 @@ void openConfigFile()
                  ( LPARAM )confFilePath.c_str() );
 }
 
-void openTagsFile()
+void openSnipsFile()
 {
     SendMessage( nppData._nppHandle, NPPM_DOOPEN, 0,
-                 ( LPARAM )tagsFileName.c_str() );
+                 ( LPARAM )snipsFileName.c_str() );
 }
 
 // Replace Tab with spaces
@@ -577,7 +577,7 @@ void QuickText()
 
     Sci_Position curPos, startPos, endPos;
     LangType langtype;
-    char tag[SZ_TAG + 1] = { 0 };
+    char snip[SZ_SNIP + 1] = { 0 };
     char sLangType[3];
     char sLangTypeGlobal[3];
 
@@ -597,16 +597,16 @@ void QuickText()
                                               curPos, ( LPARAM )true ) );
     endPos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_WORDENDPOSITION,
                                             curPos, ( LPARAM )true ) );
-    if ( (endPos - startPos) > SZ_TAG )
+    if ( (endPos - startPos) > SZ_SNIP )
         return;
 
     Sci_TextRange tr;
 	tr.chrg.cpMin = startPos;
 	tr.chrg.cpMax = endPos;
-	tr.lpstrText = tag;
+	tr.lpstrText = snip;
     ::SendMessage( scintilla, SCI_GETTEXTRANGE, 0, (LPARAM)&tr );
 
-    if ( strlen( tag ) == 0 && !cQuickText.editing )
+    if ( strlen( snip ) == 0 && !cQuickText.editing )
     {
         // Get current shortcut key (no modifiers necessary)
         ShortcutKey sk;
@@ -628,43 +628,43 @@ void QuickText()
     _itoa( langtype, sLangType, 10 );
     _itoa( 255, sLangTypeGlobal, 10 );
 
-    bool tagInCurrentLang = tags.Exists( sLangType, tag );
-    bool tagInGlobalLang = tags.Exists( sLangTypeGlobal, tag );
+    bool snipInCurrentLang = snips.Exists( sLangType, snip );
+    bool snipInGlobalLang = snips.Exists( sLangTypeGlobal, snip );
 
-    TagList tagList = tags.queryTags( sLangType, tag );
+    SnipList snipList = snips.querySnips( sLangType, snip );
 
-    //+@TonyM: add global tags list to current lang tags list (for autocompletion):
-    TagList g_tagList = tags.queryTags( sLangTypeGlobal, tag );
-    tagList.insert ( tagList.end(), g_tagList.begin(), g_tagList.end() );
+    //+@TonyM: add global snips list to current lang snips list (for autocompletion):
+    SnipList g_snipList = snips.querySnips( sLangTypeGlobal, snip );
+    snipList.insert ( snipList.end(), g_snipList.begin(), g_snipList.end() );
     //+@TonyM: free memory:
-    g_tagList.clear();
+    g_snipList.clear();
 
     // sort the combined language and global list
-    sort( tagList.begin(), tagList.end() );
+    sort( snipList.begin(), snipList.end() );
 
-    if ( tagList.size() > 0 && ( endPos - startPos > 0 ) || ( ! g_bCharAdded && ! cQuickText.editing ))
+    if ( snipList.size() > 0 && ( endPos - startPos > 0 ) || ( ! g_bCharAdded && ! cQuickText.editing ))
     {
-        stringstream tagList_ss;
-        TagList::const_iterator tagListEnd = tagList.end();
+        stringstream snipList_ss;
+        SnipList::const_iterator snipListEnd = snipList.end();
 
-        for ( TagList::const_iterator index = tagList.begin(); index != tagListEnd;
+        for ( SnipList::const_iterator index = snipList.begin(); index != snipListEnd;
                 index++ )
         {
-            tagList_ss << *index;
-            tagList_ss << '?';
-            tagList_ss << REGIMGID;
+            snipList_ss << *index;
+            snipList_ss << '?';
+            snipList_ss << REGIMGID;
 
-            if ( ( index + 1 ) != tagListEnd )
-                tagList_ss << ' ';
+            if ( ( index + 1 ) != snipListEnd )
+                snipList_ss << ' ';
         }
 
-        string newList = tagList_ss.str();
+        string newList = snipList_ss.str();
 
         SendMessage( scintilla, SCI_AUTOCSETSEPARATOR, WPARAM( ' ' ), 0 );
         SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
         SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
         SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
-        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( tag ),
+        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( snip ),
                      ( LPARAM )newList.c_str() );
     }
     if ( g_bCharAdded )
@@ -675,8 +675,8 @@ void QuickText()
         return;
     }
 
-    // check exact tag match
-    if ( tagInCurrentLang || tagInGlobalLang )
+    // check exact snip match
+    if ( snipInCurrentLang || snipInGlobalLang )
     {
         clear();
         string indent;
@@ -705,11 +705,11 @@ void QuickText()
         SendMessage( scintilla, SCI_SETSELECTIONEND, endPos, 0 );
 
         // decode key into value
-        // tags within Current lang takes priority over Global language
-        if ( tagInCurrentLang )
-            decodeStr( tags[sLangType][tag], startPos, indent );
-        else if ( tagInGlobalLang )
-            decodeStr( tags[sLangTypeGlobal][tag], startPos, indent );
+        // snips within Current lang takes priority over Global language
+        if ( snipInCurrentLang )
+            decodeStr( snips[sLangType][snip], startPos, indent );
+        else if ( snipInGlobalLang )
+            decodeStr( snips[sLangTypeGlobal][snip], startPos, indent );
 
         // replace it in scintilla
         SendMessage( scintilla, SCI_REPLACESEL, 0,
@@ -725,7 +725,7 @@ void QuickText()
     // expecting to be hopping through hotspots
     else if ( cQuickText.editing )
         jump( scintilla );
-    // autoComplete mode for tags
+    // autoComplete mode for snips
     else
         restoreKeyStroke( curPos, scintilla );
 
@@ -764,7 +764,7 @@ void clear()
 
 void loadConfig()
 {
-    tags_replica = tags; // Backup current configuration
+    snips_replica = snips; // Backup current configuration
     DialogBox( appInstance, MAKEINTRESOURCE( IDD_DLGCONFIG ),
                nppData._nppHandle, ( DLGPROC )DlgConfigProc );
     return;
@@ -791,8 +791,8 @@ void SetSysColors()
 
 void ChangeColors()
 {
-    SendMessage(ConfigWin.tag, WM_SETREDRAW, TRUE, 0);
-    RedrawWindow(ConfigWin.tag, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
+    SendMessage(ConfigWin.snip, WM_SETREDRAW, TRUE, 0);
+    RedrawWindow(ConfigWin.snip, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
 
     SendMessage(ConfigWin.text, WM_SETREDRAW, TRUE, 0);
     RedrawWindow(ConfigWin.text, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
@@ -808,8 +808,8 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             ConfigWin.add = GetDlgItem( hwndDlg, IDADD );
             ConfigWin.del = GetDlgItem( hwndDlg, IDDEL );
             ConfigWin.langCB = GetDlgItem( hwndDlg, IDLANG_CB );
-            ConfigWin.tag = GetDlgItem( hwndDlg, IDTAG );
-            ConfigWin.tagname = GetDlgItem( hwndDlg, IDTAGNAME );
+            ConfigWin.snip = GetDlgItem( hwndDlg, IDSNIP );
+            ConfigWin.snipname = GetDlgItem( hwndDlg, IDSNIPNAME );
             ConfigWin.text = GetDlgItem( hwndDlg, IDTEXT );
             ConfigWin.changed = false;
 
@@ -899,7 +899,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
         case WM_CTLCOLORLISTBOX:
         case WM_CTLCOLOREDIT:
         {
-            if ( lParam == (LPARAM)ConfigWin.text || lParam == (LPARAM)ConfigWin.tag )
+            if ( lParam == (LPARAM)ConfigWin.text || lParam == (LPARAM)ConfigWin.snip )
             {
                 SetTextColor((HDC)wParam, colorFg);
                 SetBkColor((HDC)wParam, colorBg);
@@ -924,7 +924,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                 MessageBox( hwndDlg, _T( "Do you want to save changes?" ), _T( "Warning" ),
                                             MB_YESNO | MB_ICONWARNING ) )
                         {
-                            // add tag/substitution to DB before exiting
+                            // add snip/substitution to DB before exiting
                             exiting = DlgConfigProc( hwndDlg, ( UINT ) WM_COMMAND,
                                                      ( WPARAM )( ( BN_CLICKED << 16 ) | ( IDADD ) ), 0 );
                         }
@@ -932,8 +932,8 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                     if ( exiting == TRUE )
                     {
-                        tags = tags_replica; // Save changes
-                        tags.WriteFile( tagsFileName.c_str(), lang_menu );
+                        snips = snips_replica; // Save changes
+                        snips.WriteFile( snipsFileName.c_str(), lang_menu );
                         EndDialog( hwndDlg, wParam );
                         return TRUE;
                     }
@@ -1046,7 +1046,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                 case IDLANG_CB:
 
-                //+@TonyM: Tag names list for selected language in GUI ("Options..." dialog)
+                //+@TonyM: Snip names list for selected language in GUI ("Options..." dialog)
                 case IDLANG:
                     switch ( HIWORD( wParam ) )
                     {
@@ -1055,13 +1055,13 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             stringstream langss;
 
                             // Disable controls.
-                            SendMessageA( ConfigWin.tagname, WM_SETTEXT, 0, ( LPARAM ) "" );
+                            SendMessageA( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) "" );
                             SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) "" );
                             ConfigWin.changed = false;
                             SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify" );
 
-                            // Clear the tags list.
-                            SendMessage( ConfigWin.tag, LB_RESETCONTENT, 0, 0 );
+                            // Clear the snips list.
+                            SendMessage( ConfigWin.snip, LB_RESETCONTENT, 0, 0 );
 
                             // Get lang
                             lang = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
@@ -1072,55 +1072,55 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                             langss << lang;
 
-                            // Fill the tags list
-                            for ( keymap::const_iterator i = tags_replica[langss.str()].begin();
-                                    i != tags_replica[langss.str()].end(); i++ )
-                                SendMessageA( ConfigWin.tag, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
+                            // Fill the snips list
+                            for ( keymap::const_iterator i = snips_replica[langss.str()].begin();
+                                    i != snips_replica[langss.str()].end(); i++ )
+                                SendMessageA( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
 
                             break;
                     }
 
                     return TRUE;
 
-                //+@TonyM: Tag (snippet) content for selected tag name in GUI ("Options..." dialog)
-                case IDTAG:
+                //+@TonyM: Snip (snippet) content for selected snip name in GUI ("Options..." dialog)
+                case IDSNIP:
                 {
                     switch ( HIWORD( wParam ) )
                     {
                         case LBN_SELCHANGE:
                         {
-                            size_t tag, lang;
+                            size_t snip, lang;
                             stringstream langss;
                             string quicktext;
-                            char tag_s[SZ_TAG + 1];
+                            char snip_s[SZ_SNIP + 1];
 
                             // Enable controls.
-                            EnableWindow( ConfigWin.tagname, TRUE );
+                            EnableWindow( ConfigWin.snipname, TRUE );
                             EnableWindow( ConfigWin.add, TRUE );
                             EnableWindow( ConfigWin.del, TRUE );
                             EnableWindow( ConfigWin.text, TRUE );
 
-                            // Fetch the lang and tag.
+                            // Fetch the lang and snip.
                             lang = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
 
                             //+@TonyM: to treat number 255 from QuickText.ini as GLOBAL group.
                             if ( lang == ( lang_menu.size() - 1 ) )
                                 lang = 255;
 
-                            tag = ( size_t ) SendMessage( ConfigWin.tag, LB_GETCURSEL, 0, 0 );
+                            snip = ( size_t ) SendMessage( ConfigWin.snip, LB_GETCURSEL, 0, 0 );
 
                             // nothing selected.
-                            if ( tag == LB_ERR )
+                            if ( snip == LB_ERR )
                                 return TRUE;
 
-                            SendMessageA( ConfigWin.tag, LB_GETTEXT, ( WPARAM ) tag, ( LPARAM ) tag_s );
+                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) snip, ( LPARAM ) snip_s );
                             // Strip the text.
                             langss << lang;
-                            quicktext = tags_replica[langss.str()][tag_s];
+                            quicktext = snips_replica[langss.str()][snip_s];
                             stripBreaks( quicktext );
 
-                            // Insert the corresponding tagname and text.
-                            SendMessageA( ConfigWin.tagname, WM_SETTEXT, 0, ( LPARAM ) tag_s );
+                            // Insert the corresponding snipname and text.
+                            SendMessageA( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) snip_s );
                             SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) quicktext.c_str() );
                             ConfigWin.changed = false;
                             SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "&Modify" );
@@ -1144,7 +1144,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     return TRUE;
                 }
 
-                case IDTAGNAME:
+                case IDSNIPNAME:
                 {
                     switch ( HIWORD( wParam ) )
                     {
@@ -1154,8 +1154,8 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             break;
 
                         case EN_SETFOCUS:
-                            SendMessage( ConfigWin.tag, LB_SETCURSEL , ( WPARAM ) -1, ( LPARAM ) NULL );
-                            SendMessageA( ConfigWin.tagname, WM_SETTEXT, 0, ( LPARAM ) "" );
+                            SendMessage( ConfigWin.snip, LB_SETCURSEL , ( WPARAM ) -1, ( LPARAM ) NULL );
+                            SendMessageA( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) "" );
                             SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) "" );
                             break;
                     }
@@ -1168,10 +1168,10 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case BN_CLICKED:
-                            int tag_Listbox_Index, newtag_index;
+                            int snip_Listbox_Index, newsnip_index;
                             size_t language;
-                            char oldtag[SZ_TAG + 1];
-                            char newtag[SZ_TAG + 1];
+                            char oldsnip[SZ_SNIP + 1];
+                            char newsnip[SZ_SNIP + 1];
                             DWORD_PTR textLength = SendMessageA( ConfigWin.text, WM_GETTEXTLENGTH, 0,
                                                                  0 ) + 1;
                             string substitutionTxt_s;
@@ -1187,19 +1187,19 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                 return FALSE;
                             }
 
-                            // get the old and new tagnames.
-                            tag_Listbox_Index = ( int ) SendMessage( ConfigWin.tag, LB_GETCURSEL, 0,
+                            // get the old and new snipnames.
+                            snip_Listbox_Index = ( int ) SendMessage( ConfigWin.snip, LB_GETCURSEL, 0,
                                                 0 );
-                            SendMessageA( ConfigWin.tag, LB_GETTEXT, ( WPARAM ) tag_Listbox_Index,
-                                          ( LPARAM ) oldtag );
-                            SendMessageA( ConfigWin.tagname, WM_GETTEXT, ( WPARAM ) SZ_TAG,
-                                          ( LPARAM ) newtag );
+                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) snip_Listbox_Index,
+                                          ( LPARAM ) oldsnip );
+                            SendMessageA( ConfigWin.snipname, WM_GETTEXT, ( WPARAM ) SZ_SNIP,
+                                          ( LPARAM ) newsnip );
 
-                            // validating tag
-                            if ( strlen( newtag ) == 0 )
+                            // validating snip
+                            if ( strlen( newsnip ) == 0 )
                             {
                                 MessageBox( hwndDlg,
-                                            _T( "Invalid Tag Name! Please check all input fields." ), _T( "Warning" ),
+                                            _T( "Invalid Snip Name! Please check all input fields." ), _T( "Warning" ),
                                             MB_OK | MB_ICONWARNING );
                                 return FALSE;
                             }
@@ -1229,21 +1229,21 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             // Replace the values
                             lang_ss << language;
 
-                            if ( strcmp( oldtag, newtag ) != 0 )
-                                tags_replica.DeleteKey( lang_ss.str(), oldtag );
+                            if ( strcmp( oldsnip, newsnip ) != 0 )
+                                snips_replica.DeleteKey( lang_ss.str(), oldsnip );
 
-                            tags_replica[lang_ss.str()][newtag] = substitutionTxt_s;
+                            snips_replica[lang_ss.str()][newsnip] = substitutionTxt_s;
 
                             // Refresh
-                            SendMessage( ConfigWin.tag, LB_RESETCONTENT, 0, 0 );
+                            SendMessage( ConfigWin.snip, LB_RESETCONTENT, 0, 0 );
 
-                            for ( keymap::const_iterator i = tags_replica[lang_ss.str()].begin();
-                                    i != tags_replica[lang_ss.str()].end(); i++ )
-                                SendMessageA( ConfigWin.tag, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
+                            for ( keymap::const_iterator i = snips_replica[lang_ss.str()].begin();
+                                    i != snips_replica[lang_ss.str()].end(); i++ )
+                                SendMessageA( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
 
-                            newtag_index = static_cast<int>( SendMessageA( ConfigWin.tag, LB_FINDSTRING,
-                                                             ( WPARAM ) - 1, ( LPARAM ) newtag ) );
-                            SendMessage( ConfigWin.tag, LB_SETCURSEL, ( WPARAM ) newtag_index, 0 );
+                            newsnip_index = static_cast<int>( SendMessageA( ConfigWin.snip, LB_FINDSTRING,
+                                                             ( WPARAM ) - 1, ( LPARAM ) newsnip ) );
+                            SendMessage( ConfigWin.snip, LB_SETCURSEL, ( WPARAM ) newsnip_index, 0 );
 
                             SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify" );
 
@@ -1257,25 +1257,25 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case BN_CLICKED:
-                            int selectedTag;
+                            int selectedSnip;
                             size_t lang;
-                            char tagname[SZ_TAG + 1];
+                            char snipname[SZ_SNIP + 1];
                             stringstream lang_ss;
                             string msg;
 
-                            // Fetch the tag name index
-                            selectedTag = ( int ) SendMessage( ConfigWin.tag, LB_GETCURSEL, 0, 0 );
+                            // Fetch the snip name index
+                            selectedSnip = ( int ) SendMessage( ConfigWin.snip, LB_GETCURSEL, 0, 0 );
 
                             // validating selection
-                            if ( selectedTag == LB_ERR )
+                            if ( selectedSnip == LB_ERR )
                             {
-                                MessageBox( hwndDlg, _T( "No tag name is selected." ), _T( "Warning" ),
+                                MessageBox( hwndDlg, _T( "No snip name is selected." ), _T( "Warning" ),
                                             MB_OK | MB_ICONWARNING );
                                 return TRUE;
                             }
 
-                            SendMessageA( ConfigWin.tag, LB_GETTEXT, ( WPARAM ) selectedTag,
-                                          ( LPARAM ) tagname );
+                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) selectedSnip,
+                                          ( LPARAM ) snipname );
 
                             // Fetch the lang
                             lang = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
@@ -1285,8 +1285,8 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             if ( lang == ( lang_menu.size() - 1 ) )
                                 lang = 255;
 
-                            msg = "Are you sure you want to delete the tag ";
-                            msg.append( tagname );
+                            msg = "Are you sure you want to delete the snip ";
+                            msg.append( snipname );
                             msg.push_back( '?' );
 
                             if ( MessageBoxA( hwndDlg, msg.c_str(), "Warning",
@@ -1294,16 +1294,16 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             {
                                 // Delete it
                                 lang_ss << lang;
-                                tags_replica.DeleteKey( lang_ss.str(), tagname );
+                                snips_replica.DeleteKey( lang_ss.str(), snipname );
 
                                 // Refresh
-                                SendMessage( ConfigWin.tag, LB_RESETCONTENT, 0, 0 );
+                                SendMessage( ConfigWin.snip, LB_RESETCONTENT, 0, 0 );
 
-                                for ( keymap::const_iterator i = tags_replica[lang_ss.str()].begin();
-                                        i != tags_replica[lang_ss.str()].end(); i++ )
-                                    SendMessageA( ConfigWin.tag, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
+                                for ( keymap::const_iterator i = snips_replica[lang_ss.str()].begin();
+                                        i != snips_replica[lang_ss.str()].end(); i++ )
+                                    SendMessageA( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
 
-                                SendMessageA( ConfigWin.tagname, WM_SETTEXT, 0, ( LPARAM ) "" );
+                                SendMessageA( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) "" );
                                 SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) "" );
                                 ConfigWin.changed = false;
                                 SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify" );
@@ -1318,7 +1318,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
     return FALSE;
 }
-// if tag doesn't exist, a tab should be outputted
+// if snip doesn't exist, a tab should be outputted
 bool restoreKeyStroke( Sci_Position cursorPos, HWND scintilla )
 {
     // restoring original selection
