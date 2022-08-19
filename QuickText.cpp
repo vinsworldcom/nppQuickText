@@ -47,6 +47,7 @@ const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "AllowedChars";
 const char iniUseSciAutoC[]     = "UseSciAutoC";
 const char iniInsertOnAutoC[]   = "InsertOnAutoC";
+const char iniConvertTabs[]     = "ConvertTabs";
 const char iniFixedFont[]       = "FixedFont";
 const char iniUseNppColors[]    = "UseNppColors";
 const char iniConfirmClose[]    = "ConfirmClose";
@@ -59,6 +60,7 @@ COLORREF colorFg;
 
 bool g_bInsertOnAutoC = false;
 bool g_bUseSciAutoC   = false;
+bool g_bConvertTabs   = false;
 bool g_bFixedFont     = false;
 bool g_bNppColors     = false;
 bool g_bConfirmClose  = false;
@@ -117,6 +119,8 @@ void pluginCleanUp()
                                  g_bUseSciAutoC ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniInsertOnAutoC,
                                  g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniConvertTabs,
+                                 g_bConvertTabs ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniFixedFont,
                                  g_bFixedFont ? "1" : "0", ini_file_path.c_str() );
     ::WritePrivateProfileStringA( sectionName, iniUseNppColors,
@@ -400,6 +404,8 @@ void _refreshINIFiles()
                                              0, ini_file_path.c_str() );
     g_bInsertOnAutoC = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniInsertOnAutoC,
                                              0, ini_file_path.c_str() );
+    g_bConvertTabs = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniConvertTabs,
+                                             0, ini_file_path.c_str() );
     g_bFixedFont = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniFixedFont,
                                              0, ini_file_path.c_str() );
     g_bNppColors = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniUseNppColors,
@@ -439,6 +445,26 @@ void openTagsFile()
 {
     SendMessage( nppData._nppHandle, NPPM_DOOPEN, 0,
                  ( LPARAM )tagsFileName.c_str() );
+}
+
+// Replace Tab with spaces
+void replaceTabs( string &str )
+{
+    string tabSpaces;
+    int tabWidth = (int)::SendMessage( getCurrentHScintilla(), SCI_GETTABWIDTH, 0, 0);
+    for (int i = 0; i < tabWidth; i++)
+        tabSpaces += " ";
+
+    unsigned i = 0;
+    while ( i < str.length() )
+    {
+        i = (unsigned)str.find("\t", i);
+        if ( i == static_cast<unsigned>(str.npos) )
+            break;
+
+        str.erase( i, 1 );
+        str.insert( i, tabSpaces.c_str(), tabWidth );
+    }
 }
 
 // Strip all the line breaks
@@ -505,6 +531,9 @@ void revStripBreaks( string &str )
 void decodeStr( cstring &str, Sci_Position start, string &indent )
 {
     cQuickText.text = str;
+    bool bTabs = (bool)::SendMessage( getCurrentHScintilla(), SCI_GETUSETABS, 0, 0);
+    if ( ! bTabs && g_bConvertTabs )
+        replaceTabs( cQuickText.text );
     stripBreaks( cQuickText.text, true, indent );
 
     for ( string::iterator i = cQuickText.text.begin();
@@ -794,6 +823,8 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                          ( WPARAM )( g_bUseSciAutoC ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_SETCHECK,
                          ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CT ), BM_SETCHECK,
+                         ( WPARAM )( g_bConvertTabs ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_FF  ), BM_SETCHECK,
                          ( WPARAM )( g_bFixedFont ? 1 : 0 ), 0 );
             SendMessage( GetDlgItem( hwndDlg, IDC_CHK_NPC ), BM_SETCHECK,
@@ -944,6 +975,19 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         g_bInsertOnAutoC = true;
                     else
                         g_bInsertOnAutoC = false;
+
+                    return TRUE;
+                }
+
+                case IDC_CHK_CT:
+                {
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CT ),
+                                                      BM_GETCHECK, 0, 0 );
+
+                    if ( check & BST_CHECKED )
+                        g_bConvertTabs = true;
+                    else
+                        g_bConvertTabs = false;
 
                     return TRUE;
                 }

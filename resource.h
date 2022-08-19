@@ -42,9 +42,10 @@
 #define IDC_STC_VER                     1019
 #define IDC_CHK_USA                     1020
 #define IDC_CHK_AIA                     1021
-#define IDC_CHK_FF                      1022
-#define IDC_CHK_NPC                     1023
-#define IDC_CHK_CBC                     1024
+#define IDC_CHK_CT                      1022
+#define IDC_CHK_FF                      1023
+#define IDC_CHK_NPC                     1024
+#define IDC_CHK_CBC                     1025
 
 // Next default values for new objects
 //

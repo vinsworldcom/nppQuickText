@@ -25,6 +25,7 @@ void jump( HWND );
 void clear();
 void loadConfig();
 bool restoreKeyStroke( Sci_Position, HWND );
+void replaceTabs( string & );
 void stripBreaks( string &, bool, cstring & );
 void revStripBreaks( string & );
 void decodeStr( cstring &, Sci_Position ,string & ); // Uses global var cQuickText.

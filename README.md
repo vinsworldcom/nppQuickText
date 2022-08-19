@@ -102,6 +102,11 @@ Use to configure Tags for languages.
 + **Auto Insert Autocomplete**: when a tag is completed from a Scintilla 
   autocompletion, expand the tag.  Without this enabled, you need to trigger 
   the Replace Tag hotkey again to expand the Tag.
++ **Convert Tabs (N++ setting)**: convert any `Tab` characters in the 
+  "Substitution Text" to spaces based on Notepad++ settings for the current 
+  language.  If Notepad++ does not replace tabs for the current language, this 
+  setting respects that.  If Notepad++ does replace tabs with a given number 
+  of spaces, that number of spaces is used in the replacement.
 + **Use Fixed Font**: use a fixed-width font (Courier New) in the 
   "Substitution Text" text box.
 + **Use N++ Colors**: use Notepad++ background and "Default Style" text colors 
