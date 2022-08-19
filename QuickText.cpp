@@ -36,13 +36,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define FONT_WIDTH   -8
 
 // *** Plugin specific variables
-const TCHAR NPP_PLUGIN_NAME[] = _T( "QuickText" ); // Nome do plugin
+const TCHAR NPP_PLUGIN_NAME[] = TEXT( "QuickText" ); // Nome do plugin
 const int nbFunc = 7;
 
 const TCHAR confFileName[]    = TEXT( "QuickText.conf.ini" );
 const TCHAR dataFileName[]    = TEXT( "QuickText.ini" );
 const TCHAR dataFileDefault[] = TEXT( "QuickText.default.ini" );
 basic_string<TCHAR> confFilePath;
+
 const char sectionName[]        = "General";
 const char iniKeyAllowedChars[] = "AllowedChars";
 const char iniUseSciAutoC[]     = "UseSciAutoC";
@@ -54,6 +55,9 @@ const char iniConfirmClose[]    = "ConfirmClose";
 
 NppData nppData; // handles
 FuncItem funcItems[nbFunc];
+
+const TCHAR FontFixed[]   = TEXT( "Courier New" );
+const TCHAR FontDefault[] = TEXT( "Tahoma" );
 
 COLORREF colorBg;
 COLORREF colorFg;
@@ -67,8 +71,7 @@ bool g_bConfirmClose  = true;
 bool g_bCharAdded     = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
-std::string allowedChars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-";
+std::string allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-";
 //+@TonyM: string lang_menu[] -> vector<string> lang_menu(256) - for dynamic loading from configuration file.
 vector<string> lang_menu;
 
@@ -113,25 +116,17 @@ void pluginCleanUp()
 {
     std::string ini_file_path = wstrtostr( confFilePath.c_str() );
 
-    ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars,
-                                 allowedChars.c_str(), ini_file_path.c_str() );
-    ::WritePrivateProfileStringA( sectionName, iniUseSciAutoC,
-                                 g_bUseSciAutoC ? "1" : "0", ini_file_path.c_str() );
-    ::WritePrivateProfileStringA( sectionName, iniInsertOnAutoC,
-                                 g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
-    ::WritePrivateProfileStringA( sectionName, iniConvertTabs,
-                                 g_bConvertTabs ? "1" : "0", ini_file_path.c_str() );
-    ::WritePrivateProfileStringA( sectionName, iniFixedFont,
-                                 g_bFixedFont ? "1" : "0", ini_file_path.c_str() );
-    ::WritePrivateProfileStringA( sectionName, iniUseNppColors,
-                                 g_bNppColors ? "1" : "0", ini_file_path.c_str() );
-    ::WritePrivateProfileStringA( sectionName, iniConfirmClose,
-                                 g_bConfirmClose ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniKeyAllowedChars, allowedChars.c_str(), ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniUseSciAutoC,   g_bUseSciAutoC   ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniInsertOnAutoC, g_bInsertOnAutoC ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniConvertTabs,   g_bConvertTabs   ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniFixedFont,     g_bFixedFont     ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniUseNppColors,  g_bNppColors     ? "1" : "0", ini_file_path.c_str() );
+    ::WritePrivateProfileStringA( sectionName, iniConfirmClose,  g_bConfirmClose  ? "1" : "0", ini_file_path.c_str() );
 }
 
 // *** Main
-BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall,
-                       LPVOID /* lpReserved */ )
+BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reasonForCall, LPVOID /* lpReserved */ )
 {
     switch ( reasonForCall )
     {
@@ -159,10 +154,8 @@ void commandMenuInit()
     // get path of plugin configuration
     TCHAR get_confFilePath[MAX_PATH];
     TCHAR get_dataFilePath[MAX_PATH];
-    ::SendMessage( nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH,
-                   ( LPARAM )get_confFilePath );
-    ::SendMessage( nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH,
-                   ( LPARAM )get_dataFilePath );
+    SendMessage( nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, ( LPARAM )get_confFilePath );
+    SendMessage( nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, ( LPARAM )get_dataFilePath );
 
     // if config path doesn't exist, we create it
     if ( PathFileExists( get_confFilePath ) == FALSE )
@@ -171,7 +164,7 @@ void commandMenuInit()
     // make your plugin config file full file path name
     PathAppend( get_confFilePath, confFileName );
     PathAppend( get_dataFilePath, dataFileName );
-    confFilePath = get_confFilePath;
+    confFilePath  = get_confFilePath;
     snipsFileName = get_dataFilePath;
 
     // Move data file to plugins/config if not there
@@ -183,9 +176,9 @@ void commandMenuInit()
         GetModuleFileName( ( HMODULE )appInstance, temp, sizeof( temp ) );
         defaultDbTile = temp;
         unsigned int pos;
-        pos = static_cast<unsigned int>( defaultDbTile.rfind( _T( "\\" ) ) );
+        pos = static_cast<unsigned int>( defaultDbTile.rfind( TEXT( "\\" ) ) );
         defaultDbTile.erase( pos );
-        defaultDbTile.append( _T( "\\" ) );
+        defaultDbTile.append( TEXT( "\\" ) );
         defaultDbTile.append( dataFileDefault );
 
         if ( PathFileExists( defaultDbTile.c_str() ) )
@@ -196,31 +189,31 @@ void commandMenuInit()
 
     // funcItems setting
     funcItems[0]._pFunc = QuickText;
-    lstrcpy( funcItems[0]._itemName, _T( "&Replace Snip" ) );
+    lstrcpy( funcItems[0]._itemName, TEXT( "&Replace Snip" ) );
     funcItems[0]._init2Check = false;
 
     funcItems[1]._pFunc = NULL;
-    lstrcpy( funcItems[1]._itemName, _T( "-SEPARATOR-" ) );
+    lstrcpy( funcItems[1]._itemName, TEXT( "-SEPARATOR-" ) );
     funcItems[1]._init2Check = false;
 
     funcItems[2]._pFunc = openSnipsFile;
-    lstrcpy( funcItems[2]._itemName, _T( "&Open Snips File" ) );
+    lstrcpy( funcItems[2]._itemName, TEXT( "&Open Snips File" ) );
     funcItems[2]._init2Check = false;
 
     funcItems[3]._pFunc = openConfigFile;
-    lstrcpy( funcItems[3]._itemName, _T( "Open &Config File" ) );
+    lstrcpy( funcItems[3]._itemName, TEXT( "Open &Config File" ) );
     funcItems[3]._init2Check = false;
 
     funcItems[4]._pFunc = refreshINIMap;
-    lstrcpy( funcItems[4]._itemName, _T( "Re&fresh Configuration" ) );
+    lstrcpy( funcItems[4]._itemName, TEXT( "Re&fresh Configuration" ) );
     funcItems[4]._init2Check = false;
 
     funcItems[5]._pFunc = NULL;
-    lstrcpy( funcItems[5]._itemName, _T( "-SEPARATOR-" ) );
+    lstrcpy( funcItems[5]._itemName, TEXT( "-SEPARATOR-" ) );
     funcItems[5]._init2Check = false;
 
-    funcItems[6]._pFunc = loadConfig;
-    lstrcpy( funcItems[6]._itemName, _T( "&Settings" ) );
+    funcItems[6]._pFunc = doSettings;
+    lstrcpy( funcItems[6]._itemName, TEXT( "&Settings" ) );
     funcItems[6]._init2Check = false;
 
     Config.indenting = true;
@@ -252,9 +245,10 @@ extern "C" __declspec( dllexport ) FuncItem *getFuncsArray( int *nbF )
 }
 
 // Notepad++ - messages from Scinttila
-extern "C" __declspec( dllexport ) void beNotified( SCNotification
-        *notifyCode )
+extern "C" __declspec( dllexport ) void beNotified( SCNotification *notifyCode )
 {
+    HWND scintilla = getCurrentHScintilla();
+    
     switch ( notifyCode->nmhdr.code )
     {
         // check if editing text in hotspot
@@ -265,15 +259,14 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
                 if ( notifyCode->modificationType & SC_MOD_INSERTTEXT )
                 {
                     for ( vector<Sci_Position>::iterator i = cQuickText.hotSpotsPos.begin();
-                            i != cQuickText.hotSpotsPos.end(); i++ )
+                          i != cQuickText.hotSpotsPos.end(); i++ )
                         if ( *i > notifyCode->position )
                             ( *i ) += notifyCode->length;
 
                     // 2019-03-23:MVINCENT: if current position is at the end
                     //   of inserted snip text then clear the snip hotspots else
                     //   inserted chars add to the overall length
-                    Sci_Position currpos = static_cast<Sci_Position>( SendMessage( getCurrentHScintilla(),
-                                                    SCI_GETCURRENTPOS, 0, 0 ) );
+                    Sci_Position currpos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0, 0 ) );
 
                     if ( currpos == cQuickText.hotSpotsPos[cQuickText.hotSpotsPos.size() - 1] )
                         clear();
@@ -290,7 +283,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
                     }
 
                     for ( vector<Sci_Position>::iterator i = cQuickText.hotSpotsPos.begin();
-                            i != cQuickText.hotSpotsPos.end(); i++ )
+                          i != cQuickText.hotSpotsPos.end(); i++ )
                         if ( *i > notifyCode->position )
                             ( *i ) -= notifyCode->length;
 
@@ -303,13 +296,12 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
         // check if outside a hotspot
         case SCN_UPDATEUI:
         {
-            Sci_Position currpos = static_cast<Sci_Position>( SendMessage( getCurrentHScintilla(),
-                                            SCI_GETCURRENTPOS, 0, 0 ) );
+            Sci_Position currpos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0, 0 ) );
             bool r = true;
 
             for ( unsigned int i = 0; i < cQuickText.hotSpotsPos.size(); i++ )
-                if ( currpos >= cQuickText.hotSpotsPos[i]
-                        && currpos <= cQuickText.hotSpotsPos[i] + cQuickText.hotSpotsLen[i] )
+                if ( currpos >= cQuickText.hotSpotsPos[i] &&
+                     currpos <= cQuickText.hotSpotsPos[i] + cQuickText.hotSpotsLen[i] )
                     r = false;
 
             if ( r )
@@ -346,8 +338,7 @@ extern "C" __declspec( dllexport ) void beNotified( SCNotification
 }
 
 // Notepad++ - messages from Npp
-extern "C" __declspec( dllexport ) LRESULT messageProc( UINT /* Message */,
-        WPARAM /* wParam */, LPARAM /* lParam */ )
+extern "C" __declspec( dllexport ) LRESULT messageProc( UINT /* Message */, WPARAM /* wParam */, LPARAM /* lParam */ )
 {
     return TRUE;
 }
@@ -364,12 +355,9 @@ extern "C" __declspec( dllexport ) BOOL isUnicode()
 HWND getCurrentHScintilla()
 {
     int currentEdit;
-    SendMessage( nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0,
-                 ( LPARAM )&currentEdit );
-    return ( currentEdit == 0 ) ? nppData._scintillaMainHandle :
-           nppData._scintillaSecondHandle;
+    SendMessage( nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, ( LPARAM )&currentEdit );
+    return ( currentEdit == 0 ) ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
 }
-
 
 std::string wstrtostr( const std::wstring &wstr )
 {
@@ -377,8 +365,7 @@ std::string wstrtostr( const std::wstring &wstr )
     std::string strTo;
     char *szTo = new char[wstr.length() + 1];
     szTo[wstr.size()] = '\0';
-    WideCharToMultiByte( CP_ACP, 0, wstr.c_str(), -1, szTo,
-                         ( int )wstr.length(), NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, wstr.c_str(), -1, szTo, ( int )wstr.length(), NULL, NULL );
     strTo = szTo;
     delete[] szTo;
     return strTo;
@@ -400,18 +387,12 @@ void _refreshINIFiles()
     if ( !( ini_allowedChars[0] == 0 ) )
         allowedChars = ini_allowedChars;
 
-    g_bUseSciAutoC = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniUseSciAutoC,
-                                             0, ini_file_path.c_str() );
-    g_bInsertOnAutoC = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniInsertOnAutoC,
-                                             0, ini_file_path.c_str() );
-    g_bConvertTabs = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniConvertTabs,
-                                             0, ini_file_path.c_str() );
-    g_bFixedFont = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniFixedFont,
-                                             0, ini_file_path.c_str() );
-    g_bNppColors = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniUseNppColors,
-                                             0, ini_file_path.c_str() );
-    g_bConfirmClose = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniConfirmClose,
-                                             1, ini_file_path.c_str() );
+    g_bUseSciAutoC   = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniUseSciAutoC,   0, ini_file_path.c_str() );
+    g_bInsertOnAutoC = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniInsertOnAutoC, 0, ini_file_path.c_str() );
+    g_bConvertTabs   = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniConvertTabs,   0, ini_file_path.c_str() );
+    g_bFixedFont     = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniFixedFont,     0, ini_file_path.c_str() );
+    g_bNppColors     = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniUseNppColors,  0, ini_file_path.c_str() );
+    g_bConfirmClose  = ::GetPrivateProfileIntA( ini_file_section.c_str(), iniConfirmClose,  1, ini_file_path.c_str() );
 
     int i = 0;
     TCHAR langName[MAX_PATH];
@@ -421,8 +402,8 @@ void _refreshINIFiles()
         SendMessage( nppData._nppHandle, NPPM_GETLANGUAGENAME, i, ( LPARAM ) langName );
         lang_menu.push_back( wstrtostr( langName ));
         i++;
-    } while ( ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 )
-           && ( i < 255 ) );
+    } while ( ( strcmp( wstrtostr( langName ).c_str(), "External" ) != 0 ) && ( i < 255 ) );
+
     lang_menu.push_back( "GLOBAL" );
 }
 
@@ -431,20 +412,18 @@ void refreshINIMap()
 {
     _refreshINIFiles();
     MessageBox( nppData._nppHandle,
-                _T( "QuickText.ini and QuickText.conf.ini files reloaded!" ),
+                TEXT( "QuickText.ini and QuickText.conf.ini files reloaded!" ),
                 NPP_PLUGIN_NAME, MB_OK | MB_ICONINFORMATION );
 }
 
 void openConfigFile()
 {
-    SendMessage( nppData._nppHandle, NPPM_DOOPEN, 0,
-                 ( LPARAM )confFilePath.c_str() );
+    SendMessage( nppData._nppHandle, NPPM_DOOPEN, 0, ( LPARAM )confFilePath.c_str() );
 }
 
 void openSnipsFile()
 {
-    SendMessage( nppData._nppHandle, NPPM_DOOPEN, 0,
-                 ( LPARAM )snipsFileName.c_str() );
+    SendMessage( nppData._nppHandle, NPPM_DOOPEN, 0, ( LPARAM )snipsFileName.c_str() );
 }
 
 // Replace Tab with spaces
@@ -475,8 +454,7 @@ void stripBreaks( string &str, bool doc = false, cstring &indent = "" )
     if ( doc )
     {
         HWND scintilla = getCurrentHScintilla();
-        int mode = static_cast<int>( SendMessage( scintilla, SCI_GETEOLMODE, 0,
-                                     0 ) );
+        int mode = static_cast<int>( SendMessage( scintilla, SCI_GETEOLMODE, 0, 0 ) );
 
         switch ( mode )
         {
@@ -519,8 +497,7 @@ void revStripBreaks( string &str )
 {
     unsigned i;
 
-    while ( ( i = static_cast<unsigned>( str.find( "\r\n" ) ) ) !=
-            static_cast<unsigned>( str.npos ) )
+    while ( ( i = static_cast<unsigned>( str.find( "\r\n" ) ) ) != static_cast<unsigned>( str.npos ) )
     {
         str.erase( i, 2 );
         str.insert( i, "\\n" );
@@ -536,8 +513,7 @@ void decodeStr( cstring &str, Sci_Position start, string &indent )
         replaceTabs( cQuickText.text );
     stripBreaks( cQuickText.text, true, indent );
 
-    for ( string::iterator i = cQuickText.text.begin();
-            i != cQuickText.text.end(); )
+    for ( string::iterator i = cQuickText.text.begin(); i != cQuickText.text.end(); )
     {
         if ( ( *i ) == '$' )
         {
@@ -551,8 +527,7 @@ void decodeStr( cstring &str, Sci_Position start, string &indent )
                 else
                 {
                     cQuickText.text.erase( i );
-                    cQuickText.hotSpotsPos.push_back( start + static_cast<int>
-                                                      ( i - cQuickText.text.begin() ) );
+                    cQuickText.hotSpotsPos.push_back( start + static_cast<int>( i - cQuickText.text.begin() ) );
                     cQuickText.hotSpotsLen.push_back( 0 );
                     continue;
                 }
@@ -560,8 +535,7 @@ void decodeStr( cstring &str, Sci_Position start, string &indent )
             else
             {
                 cQuickText.text.erase( i );
-                cQuickText.hotSpotsPos.push_back( start + static_cast<int>
-                                                  ( i - cQuickText.text.begin() ) );
+                cQuickText.hotSpotsPos.push_back( start + static_cast<int>( i - cQuickText.text.begin() ) );
                 cQuickText.hotSpotsLen.push_back( 0 );
                 continue;
             }
@@ -587,16 +561,12 @@ void QuickText()
       return;
 
     // define 'text' for scintilla
-    SendMessage( scintilla, SCI_SETWORDCHARS, 0,
-                 ( LPARAM )allowedChars.c_str() );
+    SendMessage( scintilla, SCI_SETWORDCHARS, 0, ( LPARAM )allowedChars.c_str() );
 
     // get 'text' location
-    curPos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0,
-                                            0 ) );
-    startPos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_WORDSTARTPOSITION,
-                                              curPos, ( LPARAM )true ) );
-    endPos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_WORDENDPOSITION,
-                                            curPos, ( LPARAM )true ) );
+    curPos   = static_cast<Sci_Position>( SendMessage( scintilla, SCI_GETCURRENTPOS, 0, 0 ) );
+    startPos = static_cast<Sci_Position>( SendMessage( scintilla, SCI_WORDSTARTPOSITION, curPos, ( LPARAM )true ) );
+    endPos   = static_cast<Sci_Position>( SendMessage( scintilla, SCI_WORDENDPOSITION, curPos, ( LPARAM )true ) );
     if ( (endPos - startPos) > SZ_SNIP )
         return;
 
@@ -610,11 +580,9 @@ void QuickText()
     {
         // Get current shortcut key (no modifiers necessary)
         ShortcutKey sk;
-        SendMessage( nppData._nppHandle, NPPM_GETSHORTCUTBYCMDID,
-                    ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
+        SendMessage( nppData._nppHandle, NPPM_GETSHORTCUTBYCMDID, ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
 
-        if (( sk._key == VK_TAB ) || ( sk._key == VK_RETURN ) &&
-              !sk._isCtrl && !sk._isAlt && !sk._isShift )
+        if (( sk._key == VK_TAB ) || ( sk._key == VK_RETURN ) && !sk._isCtrl && !sk._isAlt && !sk._isShift )
         {
             restoreKeyStroke( curPos, scintilla );
             SendMessage( scintilla, SCI_SETCHARSDEFAULT, 0, 0 );
@@ -623,19 +591,17 @@ void QuickText()
     }
 
     // get the current langtype
-    SendMessage( nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0,
-                 ( LPARAM )&langtype );
+    SendMessage( nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, ( LPARAM )&langtype );
     _itoa( langtype, sLangType, 10 );
     _itoa( 255, sLangTypeGlobal, 10 );
 
     bool snipInCurrentLang = snips.Exists( sLangType, snip );
-    bool snipInGlobalLang = snips.Exists( sLangTypeGlobal, snip );
-
-    SnipList snipList = snips.querySnips( sLangType, snip );
+    bool snipInGlobalLang  = snips.Exists( sLangTypeGlobal, snip );
+    SnipList snipList      = snips.querySnips( sLangType, snip );
 
     //+@TonyM: add global snips list to current lang snips list (for autocompletion):
     SnipList g_snipList = snips.querySnips( sLangTypeGlobal, snip );
-    snipList.insert ( snipList.end(), g_snipList.begin(), g_snipList.end() );
+    snipList.insert( snipList.end(), g_snipList.begin(), g_snipList.end() );
     //+@TonyM: free memory:
     g_snipList.clear();
 
@@ -647,8 +613,7 @@ void QuickText()
         stringstream snipList_ss;
         SnipList::const_iterator snipListEnd = snipList.end();
 
-        for ( SnipList::const_iterator index = snipList.begin(); index != snipListEnd;
-                index++ )
+        for ( SnipList::const_iterator index = snipList.begin(); index != snipListEnd; index++ )
         {
             snipList_ss << *index;
             snipList_ss << '?';
@@ -664,9 +629,9 @@ void QuickText()
         SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
         SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
         SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
-        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( snip ),
-                     ( LPARAM )newList.c_str() );
+        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( snip ), ( LPARAM )newList.c_str() );
     }
+
     if ( g_bCharAdded )
     {
         restoreKeyStroke( curPos, scintilla );
@@ -681,22 +646,21 @@ void QuickText()
         clear();
         string indent;
 
-        Sci_Position lineNumber = static_cast<Sci_Position>( SendMessage( scintilla,
-                                           SCI_LINEFROMPOSITION, curPos, 0 ) );
-        int nIndent = (int)::SendMessage( scintilla, SCI_GETLINEINDENTATION, lineNumber, 0 );
-        bool bTabs = (bool)::SendMessage( scintilla, SCI_GETUSETABS, 0, 0);
-        int tabWidth = (int)::SendMessage( scintilla, SCI_GETTABWIDTH, 0, 0);
+        Sci_Position lineNumber = static_cast<Sci_Position>( SendMessage( scintilla, SCI_LINEFROMPOSITION, curPos, 0 ) );
+        int nIndent  =  (int)::SendMessage( scintilla, SCI_GETLINEINDENTATION, lineNumber, 0 );
+        bool bTabs   = (bool)::SendMessage( scintilla, SCI_GETUSETABS, 0, 0);
+        int tabWidth =  (int)::SendMessage( scintilla, SCI_GETTABWIDTH, 0, 0);
 
         if ( bTabs && tabWidth > 0 )
         {
-            for (int i = 0; i < (int)nIndent/tabWidth; i++)
+            for ( int i = 0; i < (int)nIndent/tabWidth; i++ )
                 indent += "\t";
-            for (int i = 0; i < nIndent%tabWidth; i++)
+            for ( int i = 0; i < nIndent%tabWidth; i++ )
                 indent += " ";
         }
         else
         {
-            for (int i = 0; i < nIndent; i++)
+            for ( int i = 0; i < nIndent; i++ )
                 indent += " ";
         }
 
@@ -712,8 +676,7 @@ void QuickText()
             decodeStr( snips[sLangTypeGlobal][snip], startPos, indent );
 
         // replace it in scintilla
-        SendMessage( scintilla, SCI_REPLACESEL, 0,
-                     ( LPARAM )cQuickText.text.c_str() );
+        SendMessage( scintilla, SCI_REPLACESEL, 0, ( LPARAM )cQuickText.text.c_str() );
 
         SendMessage( scintilla, SCI_AUTOCCANCEL, 0, 0 );
 
@@ -739,14 +702,12 @@ void jump( HWND scintilla )
     if ( cQuickText.hotSpotsPos.size() != 0 )
     {
         // Browse through the hotspots
-        cQuickText.cHotSpot = ( cQuickText.cHotSpot + 1 ) %
-                              cQuickText.hotSpotsPos.size();
+        cQuickText.cHotSpot = ( cQuickText.cHotSpot + 1 ) % cQuickText.hotSpotsPos.size();
         // Select the text in the hotspot
-        SendMessage( scintilla, SCI_SETANCHOR,
-                     ( WPARAM )cQuickText.hotSpotsPos[cQuickText.cHotSpot], 0 );
-        SendMessage( scintilla, SCI_SETCURRENTPOS,
-                     ( WPARAM )cQuickText.hotSpotsPos[cQuickText.cHotSpot] +
-                     cQuickText.hotSpotsLen[cQuickText.cHotSpot], 0 );
+        SendMessage( scintilla, SCI_SETANCHOR, ( WPARAM )cQuickText.hotSpotsPos[cQuickText.cHotSpot], 0 );
+        SendMessage( scintilla, SCI_SETCURRENTPOS, 
+                     ( WPARAM )cQuickText.hotSpotsPos[cQuickText.cHotSpot] + cQuickText.hotSpotsLen[cQuickText.cHotSpot], 
+                     0 );
     }
     else
         cQuickText.editing = false;
@@ -762,25 +723,26 @@ void clear()
     cQuickText.hotSpotsLen.clear();
 }
 
-void loadConfig()
+void doSettings()
 {
     snips_replica = snips; // Backup current configuration
-    DialogBox( appInstance, MAKEINTRESOURCE( IDD_DLGCONFIG ),
-               nppData._nppHandle, ( DLGPROC )DlgConfigProc );
+    DialogBox( appInstance, MAKEINTRESOURCE( IDD_DLGCONFIG ), nppData._nppHandle, ( DLGPROC )DlgConfigProc );
     return;
 }
 
-void ChangeFont( HWND hwnd, int iHeight, int iWidth, LPCSTR fontName )
+void ChangeFont( HWND hwnd, int iHeight, int iWidth, LPCWSTR fontName )
 {
-    HFONT hFont = CreateFontA(iHeight, iWidth, 0, 0, FW_NORMAL, false, false, false, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, fontName);
+    HFONT hFont = CreateFont(iHeight, iWidth, 0, 0, FW_NORMAL, false, false, false, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
+                             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, fontName);
     SendMessage( hwnd, WM_SETFONT, ( WPARAM )hFont, true);
     DeleteObject( hFont );
 }
 
 void SetNppColors()
 {
-    colorBg = ( COLORREF )::SendMessage( getCurrentHScintilla(), SCI_STYLEGETBACK, 0, 0 );
-    colorFg = ( COLORREF )::SendMessage( getCurrentHScintilla(), SCI_STYLEGETFORE, 0, 0 );
+    HWND scintilla = getCurrentHScintilla();
+    colorBg = ( COLORREF )::SendMessage( scintilla, SCI_STYLEGETBACK, 0, 0 );
+    colorFg = ( COLORREF )::SendMessage( scintilla, SCI_STYLEGETFORE, 0, 0 );
 }
 
 void SetSysColors()
@@ -798,20 +760,19 @@ void ChangeColors()
     RedrawWindow(ConfigWin.text, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
 }
 
-LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
-                             LPARAM lParam )
+LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
     switch ( message )
     {
         case WM_INITDIALOG:
         {
-            ConfigWin.add = GetDlgItem( hwndDlg, IDADD );
-            ConfigWin.del = GetDlgItem( hwndDlg, IDDEL );
-            ConfigWin.langCB = GetDlgItem( hwndDlg, IDLANG_CB );
-            ConfigWin.snip = GetDlgItem( hwndDlg, IDSNIP );
+            ConfigWin.add      = GetDlgItem( hwndDlg, IDADD );
+            ConfigWin.del      = GetDlgItem( hwndDlg, IDDEL );
+            ConfigWin.langCB   = GetDlgItem( hwndDlg, IDLANG_CB );
+            ConfigWin.snip     = GetDlgItem( hwndDlg, IDSNIP );
             ConfigWin.snipname = GetDlgItem( hwndDlg, IDSNIPNAME );
-            ConfigWin.text = GetDlgItem( hwndDlg, IDTEXT );
-            ConfigWin.changed = false;
+            ConfigWin.text     = GetDlgItem( hwndDlg, IDTEXT );
+            ConfigWin.changed  = false;
 
             std::string version;
             version = "<a>";
@@ -819,18 +780,12 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             version += "</a>";
             SetDlgItemTextA( hwndDlg, IDC_STC_VER, version.c_str() );
 
-            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ), BM_SETCHECK,
-                         ( WPARAM )( g_bUseSciAutoC ? 1 : 0 ), 0 );
-            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_SETCHECK,
-                         ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
-            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CT ), BM_SETCHECK,
-                         ( WPARAM )( g_bConvertTabs ? 1 : 0 ), 0 );
-            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_FF  ), BM_SETCHECK,
-                         ( WPARAM )( g_bFixedFont ? 1 : 0 ), 0 );
-            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_NPC ), BM_SETCHECK,
-                         ( WPARAM )( g_bNppColors ? 1 : 0 ), 0 );
-            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CBC  ), BM_SETCHECK,
-                         ( WPARAM )( g_bConfirmClose ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ), BM_SETCHECK, ( WPARAM )( g_bUseSciAutoC   ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_SETCHECK, ( WPARAM )( g_bInsertOnAutoC ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CT  ), BM_SETCHECK, ( WPARAM )( g_bConvertTabs   ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_FF  ), BM_SETCHECK, ( WPARAM )( g_bFixedFont     ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_NPC ), BM_SETCHECK, ( WPARAM )( g_bNppColors     ? 1 : 0 ), 0 );
+            SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CBC ), BM_SETCHECK, ( WPARAM )( g_bConfirmClose  ? 1 : 0 ), 0 );
 
             if ( g_bNppColors )
                 SetNppColors();
@@ -839,9 +794,9 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             ChangeColors();
 
             if ( g_bFixedFont )
-                ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "Courier New" );
+                ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, FontFixed );
             else
-                ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "MS Shell Dlg" );
+                ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, FontDefault );
 
             // Change tab size for IDTEXT
             int tabWidth = (int)::SendMessage( getCurrentHScintilla(), SCI_GETTABWIDTH, 0, 0);
@@ -851,18 +806,15 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             int numberOfLang;
             ULongPtrToInt ( lang_menu.size(), &numberOfLang );
             for ( int i = 0; i < numberOfLang; i++ )
-                SendMessageA( ConfigWin.langCB, CB_INSERTSTRING, ( WPARAM ) - 1,
-                              ( LPARAM ) lang_menu.at( i ).c_str() );
+                SendMessageA( ConfigWin.langCB, CB_INSERTSTRING, ( WPARAM ) - 1, ( LPARAM ) lang_menu.at( i ).c_str() );
 
             // highlight current language in Notepad++
             int langIndex = 0;
-            SendMessage( nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0,
-                         ( LPARAM )&langIndex );
+            SendMessage( nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, ( LPARAM )&langIndex );
             SendMessage( ConfigWin.langCB, CB_SETCURSEL, langIndex, 0 );
 
             // ((LBN_SELCHANGE << 16) | ( IDLANG)) <-- message to pass through to IDLANG loop
-            DlgConfigProc( hwndDlg, ( UINT ) WM_COMMAND,
-                           ( WPARAM )( ( LBN_SELCHANGE << 16 ) | ( IDLANG ) ), 0 );
+            DlgConfigProc( hwndDlg, ( UINT ) WM_COMMAND, ( WPARAM )( ( LBN_SELCHANGE << 16 ) | ( IDLANG ) ), 0 );
         }
         break;
 
@@ -904,7 +856,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                 SetTextColor((HDC)wParam, colorFg);
                 SetBkColor((HDC)wParam, colorBg);
                 SetDCBrushColor((HDC)wParam, colorBg);
-                return (LRESULT) GetStockObject(DC_BRUSH); // return a DC brush.
+                return (LRESULT) GetStockObject(DC_BRUSH);
             }
             break;
         }
@@ -916,12 +868,11 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                 {
                     LRESULT exiting = true;
 
-
                     if ( g_bConfirmClose )
                     {
                         // if modified, asking to save
                         if ( ConfigWin.changed == true &&
-                                MessageBox( hwndDlg, _T( "Do you want to save changes?" ), _T( "Warning" ),
+                                MessageBox( hwndDlg, TEXT( "Do you want to save changes?" ), TEXT( "Warning" ),
                                             MB_YESNO | MB_ICONWARNING ) )
                         {
                             // add snip/substitution to DB before exiting
@@ -944,8 +895,8 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                 case IDCANCEL:
                     if ( ConfigWin.changed && g_bConfirmClose )
                     {
-                        if ( MessageBox( hwndDlg, _T( "Are you sure you want to discard changes?" ),
-                                         _T( "Warning" ), MB_YESNO | MB_ICONWARNING ) == IDYES )
+                        if ( MessageBox( hwndDlg, TEXT( "Are you sure you want to discard changes?" ),
+                                         TEXT( "Warning" ), MB_YESNO | MB_ICONWARNING ) == IDYES )
                             EndDialog( hwndDlg, wParam );
                     }
                     else
@@ -955,8 +906,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                 case IDC_CHK_USA:
                 {
-                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ),
-                                                      BM_GETCHECK, 0, 0 );
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_USA ), BM_GETCHECK, 0, 0 );
 
                     if ( check & BST_CHECKED )
                         g_bUseSciAutoC = true;
@@ -968,8 +918,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                 case IDC_CHK_AIA:
                 {
-                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ),
-                                                      BM_GETCHECK, 0, 0 );
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_AIA ), BM_GETCHECK, 0, 0 );
 
                     if ( check & BST_CHECKED )
                         g_bInsertOnAutoC = true;
@@ -981,8 +930,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                 case IDC_CHK_CT:
                 {
-                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CT ),
-                                                      BM_GETCHECK, 0, 0 );
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CT ), BM_GETCHECK, 0, 0 );
 
                     if ( check & BST_CHECKED )
                         g_bConvertTabs = true;
@@ -994,18 +942,17 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                 case IDC_CHK_FF:
                 {
-                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_FF ),
-                                                      BM_GETCHECK, 0, 0 );
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_FF ), BM_GETCHECK, 0, 0 );
 
                     if ( check & BST_CHECKED )
                     {
                         g_bFixedFont = true;
-                        ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "Courier New" );
+                        ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, FontFixed );
                     }
                     else
                     {
                         g_bFixedFont = false;
-                        ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "MS Shell Dlg" );
+                        ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, FontDefault );
                     }
 
                     return TRUE;
@@ -1013,8 +960,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                 case IDC_CHK_NPC:
                 {
-                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_NPC ),
-                                                      BM_GETCHECK, 0, 0 );
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_NPC ), BM_GETCHECK, 0, 0 );
 
                     if ( check & BST_CHECKED )
                     {
@@ -1033,8 +979,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
 
                 case IDC_CHK_CBC:
                 {
-                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CBC ),
-                                                      BM_GETCHECK, 0, 0 );
+                    int check = ( int )::SendMessage( GetDlgItem( hwndDlg, IDC_CHK_CBC ), BM_GETCHECK, 0, 0 );
 
                     if ( check & BST_CHECKED )
                         g_bConfirmClose = true;
@@ -1055,10 +1000,10 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             stringstream langss;
 
                             // Disable controls.
-                            SendMessageA( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) "" );
-                            SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) "" );
+                            SendMessage( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) TEXT( "" ) );
+                            SendMessage( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) TEXT( "" ) );
                             ConfigWin.changed = false;
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify" );
+                            SendMessage( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) TEXT( "Add/Modify" ) );
 
                             // Clear the snips list.
                             SendMessage( ConfigWin.snip, LB_RESETCONTENT, 0, 0 );
@@ -1123,7 +1068,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             SendMessageA( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) snip_s );
                             SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) quicktext.c_str() );
                             ConfigWin.changed = false;
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "&Modify" );
+                            SendMessage( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) TEXT( "&Modify" ) );
 
                             break;
                         }
@@ -1136,7 +1081,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case EN_CHANGE:
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "&Modify" );
+                            SendMessage( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) TEXT( "&Modify" ) );
                             ConfigWin.changed = true;
                             break;
                     }
@@ -1149,14 +1094,14 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case EN_CHANGE:
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "&Add" );
+                            SendMessage( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) TEXT( "&Add" ) );
                             ConfigWin.changed = true;
                             break;
 
                         case EN_SETFOCUS:
                             SendMessage( ConfigWin.snip, LB_SETCURSEL , ( WPARAM ) -1, ( LPARAM ) NULL );
-                            SendMessageA( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) "" );
-                            SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) "" );
+                            SendMessage( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) TEXT( "" ) );
+                            SendMessage( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) TEXT( "" ) );
                             break;
                     }
 
@@ -1168,45 +1113,40 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                     switch ( HIWORD( wParam ) )
                     {
                         case BN_CLICKED:
-                            int snip_Listbox_Index, newsnip_index;
+                            int snipLbIdx, newSnipIdx;
                             size_t language;
-                            char oldsnip[SZ_SNIP + 1];
-                            char newsnip[SZ_SNIP + 1];
-                            DWORD_PTR textLength = SendMessageA( ConfigWin.text, WM_GETTEXTLENGTH, 0,
-                                                                 0 ) + 1;
-                            string substitutionTxt_s;
+                            char oldSnip[SZ_SNIP + 1];
+                            char newSnip[SZ_SNIP + 1];
+                            DWORD_PTR textLength = SendMessageA( ConfigWin.text, WM_GETTEXTLENGTH, 0, 0 ) + 1;
+                            string subText;
                             stringstream lang_ss;
-                            char *substitutionTxt_ptr = NULL;
+                            char *pSubText = NULL;
 
                             // validating substitution text
                             if ( textLength == 1 )
                             {
                                 MessageBox( hwndDlg,
-                                            _T( "Invalid Substitution Text! Please check all input fields." ),
-                                            _T( "Warning" ), MB_OK | MB_ICONWARNING );
+                                            TEXT( "Invalid Substitution Text! Please check all input fields." ),
+                                            TEXT( "Warning" ), MB_OK | MB_ICONWARNING );
                                 return FALSE;
                             }
 
                             // get the old and new snipnames.
-                            snip_Listbox_Index = ( int ) SendMessage( ConfigWin.snip, LB_GETCURSEL, 0,
-                                                0 );
-                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) snip_Listbox_Index,
-                                          ( LPARAM ) oldsnip );
-                            SendMessageA( ConfigWin.snipname, WM_GETTEXT, ( WPARAM ) SZ_SNIP,
-                                          ( LPARAM ) newsnip );
+                            snipLbIdx = ( int ) SendMessage( ConfigWin.snip, LB_GETCURSEL, 0, 0 );
+                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) snipLbIdx, ( LPARAM ) oldSnip );
+                            SendMessageA( ConfigWin.snipname, WM_GETTEXT, ( WPARAM ) SZ_SNIP, ( LPARAM ) newSnip );
 
                             // validating snip
-                            if ( strlen( newsnip ) == 0 )
+                            if ( strlen( newSnip ) == 0 )
                             {
                                 MessageBox( hwndDlg,
-                                            _T( "Invalid Snip Name! Please check all input fields." ), _T( "Warning" ),
+                                            TEXT( "Invalid Snip Name! Please check all input fields." ), TEXT( "Warning" ),
                                             MB_OK | MB_ICONWARNING );
                                 return FALSE;
                             }
 
                             // dynamically allocating space for substitution text
-                            substitutionTxt_ptr = ( char * )malloc( ( sizeof( char ) * ( (
-                                    size_t )textLength ) ) );
+                            pSubText = ( char * )malloc( ( sizeof( char ) * ( ( size_t )textLength ) ) );
 
                             // get language
                             language = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
@@ -1217,22 +1157,21 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                 language = 255;
 
                             // get substitution text
-                            SendMessageA( ConfigWin.text, WM_GETTEXT, ( WPARAM ) textLength,
-                                          ( LPARAM ) substitutionTxt_ptr );
-                            substitutionTxt_s = substitutionTxt_ptr;
+                            SendMessageA( ConfigWin.text, WM_GETTEXT, ( WPARAM ) textLength, ( LPARAM ) pSubText );
+                            subText = pSubText;
 
                             // garbage collecting
-                            free( substitutionTxt_ptr );
+                            free( pSubText );
 
-                            revStripBreaks( substitutionTxt_s );
+                            revStripBreaks( subText );
 
                             // Replace the values
                             lang_ss << language;
 
-                            if ( strcmp( oldsnip, newsnip ) != 0 )
-                                snips_replica.DeleteKey( lang_ss.str(), oldsnip );
+                            if ( strcmp( oldSnip, newSnip ) != 0 )
+                                snips_replica.DeleteKey( lang_ss.str(), oldSnip );
 
-                            snips_replica[lang_ss.str()][newsnip] = substitutionTxt_s;
+                            snips_replica[lang_ss.str()][newSnip] = subText;
 
                             // Refresh
                             SendMessage( ConfigWin.snip, LB_RESETCONTENT, 0, 0 );
@@ -1241,11 +1180,11 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                     i != snips_replica[lang_ss.str()].end(); i++ )
                                 SendMessageA( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
 
-                            newsnip_index = static_cast<int>( SendMessageA( ConfigWin.snip, LB_FINDSTRING,
-                                                             ( WPARAM ) - 1, ( LPARAM ) newsnip ) );
-                            SendMessage( ConfigWin.snip, LB_SETCURSEL, ( WPARAM ) newsnip_index, 0 );
+                            newSnipIdx = static_cast<int>( SendMessageA( ConfigWin.snip, LB_FINDSTRING,
+                                                             ( WPARAM ) - 1, ( LPARAM ) newSnip ) );
+                            SendMessage( ConfigWin.snip, LB_SETCURSEL, ( WPARAM ) newSnipIdx, 0 );
 
-                            SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify" );
+                            SendMessage( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) TEXT( "Add/Modify" ) );
 
                             break;
                     }
@@ -1259,7 +1198,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                         case BN_CLICKED:
                             int selectedSnip;
                             size_t lang;
-                            char snipname[SZ_SNIP + 1];
+                            char snipName[SZ_SNIP + 1];
                             stringstream lang_ss;
                             string msg;
 
@@ -1269,13 +1208,12 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                             // validating selection
                             if ( selectedSnip == LB_ERR )
                             {
-                                MessageBox( hwndDlg, _T( "No snip name is selected." ), _T( "Warning" ),
+                                MessageBox( hwndDlg, TEXT( "No snip name is selected." ), TEXT( "Warning" ),
                                             MB_OK | MB_ICONWARNING );
                                 return TRUE;
                             }
 
-                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) selectedSnip,
-                                          ( LPARAM ) snipname );
+                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) selectedSnip, ( LPARAM ) snipName );
 
                             // Fetch the lang
                             lang = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
@@ -1286,15 +1224,14 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                 lang = 255;
 
                             msg = "Are you sure you want to delete the snip ";
-                            msg.append( snipname );
+                            msg.append( snipName );
                             msg.push_back( '?' );
 
-                            if ( MessageBoxA( hwndDlg, msg.c_str(), "Warning",
-                                              MB_YESNO | MB_ICONQUESTION ) == IDYES )
+                            if ( MessageBoxA( hwndDlg, msg.c_str(), "Warning", MB_YESNO | MB_ICONQUESTION ) == IDYES )
                             {
                                 // Delete it
                                 lang_ss << lang;
-                                snips_replica.DeleteKey( lang_ss.str(), snipname );
+                                snips_replica.DeleteKey( lang_ss.str(), snipName );
 
                                 // Refresh
                                 SendMessage( ConfigWin.snip, LB_RESETCONTENT, 0, 0 );
@@ -1303,10 +1240,10 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
                                         i != snips_replica[lang_ss.str()].end(); i++ )
                                     SendMessageA( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
 
-                                SendMessageA( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) "" );
-                                SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) "" );
+                                SendMessage( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) TEXT( "" ) );
+                                SendMessage( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) TEXT( "" ) );
                                 ConfigWin.changed = false;
-                                SendMessageA( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) "Add/Modify" );
+                                SendMessage( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) TEXT( "Add/Modify" ) );
                             }
 
                             break;
@@ -1326,11 +1263,9 @@ bool restoreKeyStroke( Sci_Position cursorPos, HWND scintilla )
 
     // Get current shortcut key (no modifiers necessary)
     ShortcutKey sk;
-    SendMessage( nppData._nppHandle, NPPM_GETSHORTCUTBYCMDID,
-                 ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
+    SendMessage( nppData._nppHandle, NPPM_GETSHORTCUTBYCMDID, ( WPARAM ) funcItems[0]._cmdID, ( LPARAM )&sk );
 
-    if ( ( sk._key == VK_TAB ) &&
-          !sk._isCtrl && !sk._isAlt && !sk._isShift )
+    if ( ( sk._key == VK_TAB ) && !sk._isCtrl && !sk._isAlt && !sk._isShift )
         SendMessage( scintilla, SCI_TAB, 0, 0 );
 
     return true;

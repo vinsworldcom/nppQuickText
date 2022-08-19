@@ -23,12 +23,13 @@ void openConfigFile();
 void openSnipsFile();
 void jump( HWND );
 void clear();
-void loadConfig();
+void doSettings();
 bool restoreKeyStroke( Sci_Position, HWND );
 void replaceTabs( string & );
 void stripBreaks( string &, bool, cstring & );
 void revStripBreaks( string & );
 void decodeStr( cstring &, Sci_Position ,string & ); // Uses global var cQuickText.
+void ChangeFont( HWND, int, int, LPCWSTR );
 void SetNppColors( void );
 void SetSysColors( void );
 void ChangeColors( void );
