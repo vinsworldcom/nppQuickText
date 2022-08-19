@@ -812,6 +812,11 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam,
             else
                 ChangeFont( ConfigWin.text, FONT_HEIGHT, FONT_WIDTH, "MS Shell Dlg" );
 
+            // Change tab size for IDTEXT
+            int tabWidth = (int)::SendMessage( getCurrentHScintilla(), SCI_GETTABWIDTH, 0, 0);
+            tabWidth *= 4; // Should probably use MapDialogRect()
+            SendMessage( ConfigWin.text, EM_SETTABSTOPS, 1, (LPARAM) &tabWidth );
+
             int numberOfLang;
             ULongPtrToInt ( lang_menu.size(), &numberOfLang );
             for ( int i = 0; i < numberOfLang; i++ )
