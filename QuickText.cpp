@@ -63,7 +63,7 @@ bool g_bUseSciAutoC   = false;
 bool g_bConvertTabs   = false;
 bool g_bFixedFont     = false;
 bool g_bNppColors     = false;
-bool g_bConfirmClose  = false;
+bool g_bConfirmClose  = true;
 bool g_bCharAdded     = false;
 
 //+@TonyM: added some characters (._-). more characters I've added, more errors occure.
