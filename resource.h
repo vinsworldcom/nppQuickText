@@ -11,7 +11,7 @@
 /* VERSION DEFINITIONS */
 #define VER_MAJOR   0
 #define VER_MINOR   2
-#define VER_RELEASE 4
+#define VER_RELEASE 5
 #define VER_BUILD   1
 #define VER_STRING  STR(VER_MAJOR) "." STR(VER_MINOR) "." STR(VER_RELEASE) "." STR(VER_BUILD)
 
@@ -31,17 +31,21 @@
 #define IDD_DLGCONFIG                   101
 #define IDLANG                          1002
 #define IDTEXT                          1003
-#define IDTAG                           1004
+#define IDSNIP                          1004
 #define IDADDMOD                        1005
 #define IDADD                           1005
 #define IDDEL                           1006
-#define IDTAGNAME                       1008
+#define IDSNIPNAME                      1008
 #define IDLANG_CB                       1011
 #define IDSMARTEDIT                     1017
 #define IDC_EDIT1                       1018
 #define IDC_STC_VER                     1019
 #define IDC_CHK_USA                     1020
 #define IDC_CHK_AIA                     1021
+#define IDC_CHK_CT                      1022
+#define IDC_CHK_FF                      1023
+#define IDC_CHK_NPC                     1024
+#define IDC_CHK_CBC                     1025
 
 // Next default values for new objects
 //

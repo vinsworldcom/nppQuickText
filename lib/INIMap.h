@@ -35,7 +35,7 @@ using namespace std::tr1;
 typedef const string cstring;
 typedef map<string, string> keymap;
 typedef map<string, keymap> inimap;
-typedef vector<string> TagList;
+typedef vector<string> SnipList;
 
 class INIMap
 {
@@ -49,13 +49,13 @@ class INIMap
         virtual keymap &operator[]( cstring &section );
         virtual keymap &operator[]( const char *section );
         virtual bool Exists( cstring &section ) const;
-        virtual bool Exists( cstring &section, cstring &tag ) const;
+        virtual bool Exists( cstring &section, cstring &snip ) const;
         virtual bool DeleteSection ( cstring &section );
         virtual bool DeleteKey( cstring &section, cstring &key );
         virtual void Clear();
         virtual bool FileExists( const TCHAR *filename );
-        // query for a list of matching Tag with input string
-        virtual vector<string> queryTags( cstring &section, cstring &key );
+        // query for a list of matching snip with input string
+        virtual vector<string> querySnips( cstring &section, cstring &key );
 };
 
 #endif

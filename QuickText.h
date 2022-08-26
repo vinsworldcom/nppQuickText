@@ -20,15 +20,20 @@ std::string wstrtostr( const std::wstring & );
 void _refreshINIFiles();
 void refreshINIMap();
 void openConfigFile();
-void openTagsFile();
+void openSnipsFile();
 void jump( HWND );
 void clear();
-void loadConfig();
+void doSettings();
 bool restoreKeyStroke( Sci_Position, HWND );
+void replaceTabs( string & );
 void stripBreaks( string &, bool, cstring & );
 void revStripBreaks( string & );
 void decodeStr( cstring &, Sci_Position ,string & ); // Uses global var cQuickText.
-BOOL CALLBACK DlgConfigProc( HWND, UINT, WPARAM, LPARAM );
+void ChangeFont( HWND, int, int, LPCWSTR );
+void SetNppColors( void );
+void SetSysColors( void );
+void ChangeColors( void );
+LRESULT CALLBACK DlgConfigProc( HWND, UINT, WPARAM, LPARAM );
 
 //////////////////////////////////////////////////////////////////////////
 /*
@@ -42,7 +47,7 @@ struct
     vector<Sci_Position> hotSpotsLen;
     bool editing;
     /*unsigned*/ int cHotSpot; // Current HotSpot
-} cQuickText; // Current QuickText tag
+} cQuickText; // Current QuickText snip
 
 struct
 {
@@ -51,14 +56,14 @@ struct
 
 struct
 {
-    HWND langCB, tag, text, add, del, tagname;
+    HWND langCB, snip, text, add, del, snipname;
     bool changed;
 } ConfigWin;
 
 HINSTANCE appInstance;
 
 // *** Variables
-INIMap tags, tags_replica;
-basic_string<TCHAR> tagsFileName;
+INIMap snips, snips_replica;
+basic_string<TCHAR> snipsFileName;
 
 #endif

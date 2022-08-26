@@ -81,27 +81,27 @@ bool INIMap::ReadFile ( const TCHAR *filename )
     while ( getline( configFile, lineBuffer ) )
     {
         cmatch matchResults;
-        regex tagNumberMatch( "\\[([\\d]+)\\]" ); // matching [(1)], [(2)] and etc.
-        // 2019-03-22:MVINCENT: tagAndSubstitutionTextMatch not used
+        regex snipNumberMatch( "\\[([\\d]+)\\]" ); // matching [(1)], [(2)] and etc.
+        // 2019-03-22:MVINCENT: snipAndSubstitutionTextMatch not used
         //     the noComment is useful to not match the LANGUAGE_NAME prefix
         //     which can add documentation / comments to the INI file
-//      regex tagAndSubstitutionTextMatch("([^=]+)=([\\S]+)"); // match (a)=(<a> </a>)
+//      regex snipAndSubstitutionTextMatch("([^=]+)=([\\S]+)"); // match (a)=(<a> </a>)
         regex noComment( "^#LANGUAGE_NAME" ); // match "comments"
 
         // e.g. [1]
-        // parsing tag number
-        if ( regex_search( lineBuffer.c_str(), matchResults, tagNumberMatch ) )
+        // parsing snip number
+        if ( regex_search( lineBuffer.c_str(), matchResults, snipNumberMatch ) )
         {
             curSections.clear();
-            string tagNumber = matchResults[1];
+            string snipNumber = matchResults[1];
 
-            if ( tagNumber.length() == 0 )
+            if ( snipNumber.length() == 0 )
                 return false;
             else
-                curSections.push_back( tagNumber );
+                curSections.push_back( snipNumber );
 
             //Tokenizer t;
-            //t.Tokenize(tagNumber, curSections, " ");
+            //t.Tokenize(snipNumber, curSections, " ");
 
             if ( curSections.size() == 0 )
                 return false;
@@ -118,18 +118,18 @@ bool INIMap::ReadFile ( const TCHAR *filename )
 
             if ( equalSignIndex != string::npos )
             {
-                string tagName = string( lineBuffer.substr( 0, equalSignIndex ) );
+                string snipName = string( lineBuffer.substr( 0, equalSignIndex ) );
                 string substitutionText = string( lineBuffer.substr( equalSignIndex + 1 ) );
 
                 //if (curSection.c_str() == "" || k.c_str() == "" || d.c_str() == "") return false;
-                //if (curSections.size() == 0 || tagName.c_str() == "" || substitutionText.c_str() == "")
-                if ( curSections.size() == 0 || tagName.empty()
+                //if (curSections.size() == 0 || snipName.c_str() == "" || substitutionText.c_str() == "")
+                if ( curSections.size() == 0 || snipName.empty()
                         || substitutionText.empty() )
                     return false;
 
                 for ( vector<string>::const_iterator i = curSections.begin();
                         i != curSections.end(); i++ )
-                    data[*i][tagName] = substitutionText;
+                    data[*i][snipName] = substitutionText;
             }
         }
     }
@@ -216,51 +216,51 @@ bool INIMap::Exists( cstring &section ) const
     return false;
 }
 
-// check if language and tag existance in config
-bool INIMap::Exists( cstring &section, cstring &tag ) const
+// check if language and snip existance in config
+bool INIMap::Exists( cstring &section, cstring &snip ) const
 {
     inimap::const_iterator i = data.find( section );
 
     if ( i == data.end() )
         return false;
 
-    if ( i->second.find( tag ) != i->second.end() )
+    if ( i->second.find( snip ) != i->second.end() )
         return true;
 
     return false;
 }
 
-// query for a list of matching Tags with input string
-TagList INIMap::queryTags( cstring &section, cstring &tag )
+// query for a list of matching Snips with input string
+SnipList INIMap::querySnips( cstring &section, cstring &snip )
 {
-    TagList tagList;
+    SnipList snipList;
     cmatch matchResults;
-    //+@TonyM: "([\\S]*" + tag + "([\\S]*)" -> "^" + tag + "([\\S]*)"
-    regex tagsRegex( "^" + tag +
-                     "([\\S]*)" ); // match any string with tag as substring
+    //+@TonyM: "([\\S]*" + snip + "([\\S]*)" -> "^" + snip + "([\\S]*)"
+    regex snipsRegex( "^" + snip +
+                     "([\\S]*)" ); // match any string with snip as substring
 
     // use regex to match string
     if ( Exists( section ) )
     {
         keymap curSection = data[section];
-        keymap::const_iterator tagPointer = curSection.begin();
+        keymap::const_iterator snipPointer = curSection.begin();
 
-        while ( tagPointer != curSection.end() )
+        while ( snipPointer != curSection.end() )
         {
-            if ( regex_search( tagPointer->first.c_str(), matchResults, tagsRegex ) )
-                tagList.insert( tagList.begin(), tagPointer->first );
+            if ( regex_search( snipPointer->first.c_str(), matchResults, snipsRegex ) )
+                snipList.insert( snipList.begin(), snipPointer->first );
 
-            tagPointer++;
+            snipPointer++;
         }
 
         // Nice to return a sorted list, but if we get a language list (sort)
         // then a global list (sort) and then combine, still need to sort the 
         // result - so 3 sorts?  How about skip it and only sort the one time, 
-        // since we only call queryTags() from QuickText()
-        // sort( tagList.begin(), tagList.end() );
+        // since we only call querySnips() from QuickText()
+        // sort( snipList.begin(), snipList.end() );
     }
 
-    return tagList;
+    return snipList;
 }
 
 void INIMap::Clear()
