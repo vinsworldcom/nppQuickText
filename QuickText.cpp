@@ -449,7 +449,7 @@ void replaceTabs( string &str )
 // Strip all the line breaks
 void stripBreaks( wstring &str, bool doc = false, cstring &indent = TEXT("") )
 {
-    char newline[3] = "\r\n";
+    TCHAR newline[3] = TEXT("\r\n");
 
     if ( doc )
     {
@@ -459,29 +459,29 @@ void stripBreaks( wstring &str, bool doc = false, cstring &indent = TEXT("") )
         switch ( mode )
         {
             case SC_EOL_CRLF:
-                strcpy( newline, "\r\n" );
+                wcscpy( newline, TEXT("\r\n") );
                 break;
 
             case SC_EOL_CR:
-                strcpy( newline, "\r" );
+                wcscpy( newline, TEXT("\r") );
                 break;
 
             case SC_EOL_LF:
-                strcpy( newline, "\n" );
+                wcscpy( newline, TEXT("\n") );
                 break;
         }
     }
 
     unsigned i = 0;
-    int newlineLength = ( int )strlen( newline );
+    int newlineLength = ( int )wcslen( newline );
 
     while ( i < str.length() )
     {
-        i = (unsigned)str.find("\\n", i);
+        i = (unsigned)str.find(TEXT("\\n"), i);
         if ( i == static_cast<unsigned>(str.npos) )
             break;
 
-        if ( ( i == 0 ) || ( ( i > 0 ) && ( str.at( i - 1 ) != '\\' ) ) )
+        if ( ( i == 0 ) || ( ( i > 0 ) && ( str.at( i - 1 ) != TEXT('\\') ) ) )
         {
             str.erase( i, 2 );
             str.insert( i, newline, newlineLength );
@@ -515,11 +515,11 @@ void decodeStr( cstring &str, Sci_Position start, string &indent )
 
     for ( string::iterator i = cQuickText.text.begin(); i != cQuickText.text.end(); )
     {
-        if ( ( *i ) == '$' )
+        if ( ( *i ) == TEXT('$') )
         {
             if ( i != cQuickText.text.begin() )
             {
-                if ( ( *( i - 1 ) ) == '\\' )
+                if ( ( *( i - 1 ) ) == TEXT('\\') )
                 {
                     cQuickText.text.erase( i - 1 );
                     continue;
