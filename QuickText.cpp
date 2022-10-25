@@ -427,17 +427,17 @@ void openSnipsFile()
 }
 
 // Replace Tab with spaces
-void replaceTabs( string &str )
+void replaceTabs( wstring &str )
 {
-    string tabSpaces;
+    wstring tabSpaces;
     int tabWidth = (int)::SendMessage( getCurrentHScintilla(), SCI_GETTABWIDTH, 0, 0);
     for (int i = 0; i < tabWidth; i++)
-        tabSpaces += " ";
+        tabSpaces += TEXT(" ");
 
     unsigned i = 0;
     while ( i < str.length() )
     {
-        i = (unsigned)str.find("\t", i);
+        i = (unsigned)str.find(TEXT("\t"), i);
         if ( i == static_cast<unsigned>(str.npos) )
             break;
 
@@ -493,19 +493,19 @@ void stripBreaks( wstring &str, bool doc = false, cstring &indent = TEXT("") )
 }
 
 // Reverse Strip all the line breaks
-void revStripBreaks( string &str )
+void revStripBreaks( wstring &str )
 {
     unsigned i;
 
-    while ( ( i = static_cast<unsigned>( str.find( "\r\n" ) ) ) != static_cast<unsigned>( str.npos ) )
+    while ( ( i = static_cast<unsigned>( str.find( TEXT("\r\n") ) ) ) != static_cast<unsigned>( str.npos ) )
     {
         str.erase( i, 2 );
-        str.insert( i, "\\n" );
+        str.insert( i, TEXT("\\n") );
     }
 }
 
 // set cQuickText.text to substitution texts, setup hotspots hopping
-void decodeStr( cstring &str, Sci_Position start, string &indent )
+void decodeStr( cstring &str, Sci_Position start, wstring &indent )
 {
     cQuickText.text = str;
     bool bTabs = (bool)::SendMessage( getCurrentHScintilla(), SCI_GETUSETABS, 0, 0);
@@ -513,7 +513,7 @@ void decodeStr( cstring &str, Sci_Position start, string &indent )
         replaceTabs( cQuickText.text );
     stripBreaks( cQuickText.text, true, indent );
 
-    for ( string::iterator i = cQuickText.text.begin(); i != cQuickText.text.end(); )
+    for ( wstring::iterator i = cQuickText.text.begin(); i != cQuickText.text.end(); )
     {
         if ( ( *i ) == TEXT('$') )
         {
@@ -551,9 +551,9 @@ void QuickText()
 
     Sci_Position curPos, startPos, endPos;
     LangType langtype;
-    char snip[SZ_SNIP + 1] = { 0 };
-    char sLangType[3];
-    char sLangTypeGlobal[3];
+    TCHAR snip[SZ_SNIP + 1] = { 0 };
+    TCHAR sLangType[3];
+    TCHAR sLangTypeGlobal[3];
 
     // cannot handle multiple selections
     int sels = (int)::SendMessage( scintilla, SCI_GETSELECTIONS, 0, 0 );
@@ -576,7 +576,7 @@ void QuickText()
 	tr.lpstrText = snip;
     ::SendMessage( scintilla, SCI_GETTEXTRANGE, 0, (LPARAM)&tr );
 
-    if ( strlen( snip ) == 0 && !cQuickText.editing )
+    if ( wcslen( snip ) == 0 && !cQuickText.editing )
     {
         // Get current shortcut key (no modifiers necessary)
         ShortcutKey sk;
@@ -592,8 +592,8 @@ void QuickText()
 
     // get the current langtype
     SendMessage( nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, ( LPARAM )&langtype );
-    _itoa( langtype, sLangType, 10 );
-    _itoa( 255, sLangTypeGlobal, 10 );
+    _itot( langtype, sLangType, 10 );
+    _itot( 255, sLangTypeGlobal, 10 );
 
     bool snipInCurrentLang = snips.Exists( sLangType, snip );
     bool snipInGlobalLang  = snips.Exists( sLangTypeGlobal, snip );
@@ -616,11 +616,11 @@ void QuickText()
         for ( SnipList::const_iterator index = snipList.begin(); index != snipListEnd; index++ )
         {
             snipList_ss << *index;
-            snipList_ss << '?';
+            snipList_ss << TEXT('?');
             snipList_ss << REGIMGID;
 
             if ( ( index + 1 ) != snipListEnd )
-                snipList_ss << ' ';
+                snipList_ss << TEXT(' ');
         }
 
         string newList = snipList_ss.str();
@@ -629,7 +629,7 @@ void QuickText()
         SendMessage( scintilla, SCI_AUTOCSETTYPESEPARATOR, WPARAM('?'), 0 );
         SendMessage( scintilla, SCI_AUTOCSETIGNORECASE, true, 0 );
         SendMessage( scintilla, SCI_REGISTERIMAGE, REGIMGID, (LPARAM)xpmQt );
-        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) strlen( snip ), ( LPARAM )newList.c_str() );
+        SendMessage( scintilla, SCI_AUTOCSHOW, ( WPARAM ) wcslen( snip ), ( LPARAM )newList.c_str() );
     }
 
     if ( g_bCharAdded )
@@ -644,7 +644,7 @@ void QuickText()
     if ( snipInCurrentLang || snipInGlobalLang )
     {
         clear();
-        string indent;
+        wstring indent;
 
         Sci_Position lineNumber = static_cast<Sci_Position>( SendMessage( scintilla, SCI_LINEFROMPOSITION, curPos, 0 ) );
         int nIndent  =  (int)::SendMessage( scintilla, SCI_GETLINEINDENTATION, lineNumber, 0 );
@@ -654,14 +654,14 @@ void QuickText()
         if ( bTabs && tabWidth > 0 )
         {
             for ( int i = 0; i < (int)nIndent/tabWidth; i++ )
-                indent += "\t";
+                indent += TEXT("\t");
             for ( int i = 0; i < nIndent%tabWidth; i++ )
-                indent += " ";
+                indent += TEXT(" ");
         }
         else
         {
             for ( int i = 0; i < nIndent; i++ )
-                indent += " ";
+                indent += TEXT(" ");
         }
 
         // put back original selection for replacing
@@ -716,7 +716,7 @@ void jump( HWND scintilla )
 // clear settings and etc.
 void clear()
 {
-    cQuickText.text = "";
+    cQuickText.text = TEXT("");
     cQuickText.cHotSpot = NEW_HOTSPOT;
     cQuickText.editing = false;
     cQuickText.hotSpotsPos.clear();
@@ -806,7 +806,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
             int numberOfLang;
             ULongPtrToInt ( lang_menu.size(), &numberOfLang );
             for ( int i = 0; i < numberOfLang; i++ )
-                SendMessageA( ConfigWin.langCB, CB_INSERTSTRING, ( WPARAM ) - 1, ( LPARAM ) lang_menu.at( i ).c_str() );
+                SendMessage( ConfigWin.langCB, CB_INSERTSTRING, ( WPARAM ) - 1, ( LPARAM ) lang_menu.at( i ).c_str() );
 
             // highlight current language in Notepad++
             int langIndex = 0;
@@ -997,7 +997,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                     {
                         case LBN_SELCHANGE:
                             size_t lang;
-                            stringstream langss;
+                            wstringstream langss;
 
                             // Disable controls.
                             SendMessage( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) TEXT( "" ) );
@@ -1020,7 +1020,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                             // Fill the snips list
                             for ( keymap::const_iterator i = snips_replica[langss.str()].begin();
                                     i != snips_replica[langss.str()].end(); i++ )
-                                SendMessageA( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
+                                SendMessage( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
 
                             break;
                     }
@@ -1035,9 +1035,9 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                         case LBN_SELCHANGE:
                         {
                             size_t snip, lang;
-                            stringstream langss;
-                            string quicktext;
-                            char snip_s[SZ_SNIP + 1];
+                            wstringstream langss;
+                            wstring quicktext;
+                            TCHAR snip_s[SZ_SNIP + 1];
 
                             // Enable controls.
                             EnableWindow( ConfigWin.snipname, TRUE );
@@ -1058,15 +1058,15 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                             if ( snip == LB_ERR )
                                 return TRUE;
 
-                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) snip, ( LPARAM ) snip_s );
+                            SendMessage( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) snip, ( LPARAM ) snip_s );
                             // Strip the text.
                             langss << lang;
                             quicktext = snips_replica[langss.str()][snip_s];
                             stripBreaks( quicktext );
 
                             // Insert the corresponding snipname and text.
-                            SendMessageA( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) snip_s );
-                            SendMessageA( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) quicktext.c_str() );
+                            SendMessage( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) snip_s );
+                            SendMessage( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) quicktext.c_str() );
                             ConfigWin.changed = false;
                             SendMessage( ConfigWin.add, WM_SETTEXT, 0, ( LPARAM ) TEXT( "&Modify" ) );
 
@@ -1115,12 +1115,12 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                         case BN_CLICKED:
                             int snipLbIdx, newSnipIdx;
                             size_t language;
-                            char oldSnip[SZ_SNIP + 1];
-                            char newSnip[SZ_SNIP + 1];
-                            DWORD_PTR textLength = SendMessageA( ConfigWin.text, WM_GETTEXTLENGTH, 0, 0 ) + 1;
-                            string subText;
-                            stringstream lang_ss;
-                            char *pSubText = NULL;
+                            TCHAR oldSnip[SZ_SNIP + 1];
+                            TCHAR newSnip[SZ_SNIP + 1];
+                            DWORD_PTR textLength = SendMessage( ConfigWin.text, WM_GETTEXTLENGTH, 0, 0 ) + 1;
+                            wstring subText;
+                            wstringstream lang_ss;
+                            TCHAR *pSubText = NULL;
 
                             // validating substitution text
                             if ( textLength == 1 )
@@ -1133,11 +1133,11 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 
                             // get the old and new snipnames.
                             snipLbIdx = ( int ) SendMessage( ConfigWin.snip, LB_GETCURSEL, 0, 0 );
-                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) snipLbIdx, ( LPARAM ) oldSnip );
-                            SendMessageA( ConfigWin.snipname, WM_GETTEXT, ( WPARAM ) SZ_SNIP, ( LPARAM ) newSnip );
+                            SendMessage( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) snipLbIdx, ( LPARAM ) oldSnip );
+                            SendMessage( ConfigWin.snipname, WM_GETTEXT, ( WPARAM ) SZ_SNIP, ( LPARAM ) newSnip );
 
                             // validating snip
-                            if ( strlen( newSnip ) == 0 )
+                            if ( wcslen( newSnip ) == 0 )
                             {
                                 MessageBox( hwndDlg,
                                             TEXT( "Invalid Snip Name! Please check all input fields." ), TEXT( "Warning" ),
@@ -1146,7 +1146,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                             }
 
                             // dynamically allocating space for substitution text
-                            pSubText = ( char * )malloc( ( sizeof( char ) * ( ( size_t )textLength ) ) );
+                            pSubText = ( TCHAR * )malloc( ( sizeof( TCHAR ) * ( ( size_t )textLength ) ) );
 
                             // get language
                             language = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
@@ -1157,7 +1157,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                                 language = 255;
 
                             // get substitution text
-                            SendMessageA( ConfigWin.text, WM_GETTEXT, ( WPARAM ) textLength, ( LPARAM ) pSubText );
+                            SendMessage( ConfigWin.text, WM_GETTEXT, ( WPARAM ) textLength, ( LPARAM ) pSubText );
                             subText = pSubText;
 
                             // garbage collecting
@@ -1168,7 +1168,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                             // Replace the values
                             lang_ss << language;
 
-                            if ( strcmp( oldSnip, newSnip ) != 0 )
+                            if ( wcscmp( oldSnip, newSnip ) != 0 )
                                 snips_replica.DeleteKey( lang_ss.str(), oldSnip );
 
                             snips_replica[lang_ss.str()][newSnip] = subText;
@@ -1178,9 +1178,9 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 
                             for ( keymap::const_iterator i = snips_replica[lang_ss.str()].begin();
                                     i != snips_replica[lang_ss.str()].end(); i++ )
-                                SendMessageA( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
+                                SendMessage( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
 
-                            newSnipIdx = static_cast<int>( SendMessageA( ConfigWin.snip, LB_FINDSTRING,
+                            newSnipIdx = static_cast<int>( SendMessage( ConfigWin.snip, LB_FINDSTRING,
                                                              ( WPARAM ) - 1, ( LPARAM ) newSnip ) );
                             SendMessage( ConfigWin.snip, LB_SETCURSEL, ( WPARAM ) newSnipIdx, 0 );
 
@@ -1198,9 +1198,9 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                         case BN_CLICKED:
                             int selectedSnip;
                             size_t lang;
-                            char snipName[SZ_SNIP + 1];
-                            stringstream lang_ss;
-                            string msg;
+                            TCHAR snipName[SZ_SNIP + 1];
+                            wstringstream lang_ss;
+                            wstring msg;
 
                             // Fetch the snip name index
                             selectedSnip = ( int ) SendMessage( ConfigWin.snip, LB_GETCURSEL, 0, 0 );
@@ -1213,7 +1213,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                                 return TRUE;
                             }
 
-                            SendMessageA( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) selectedSnip, ( LPARAM ) snipName );
+                            SendMessage( ConfigWin.snip, LB_GETTEXT, ( WPARAM ) selectedSnip, ( LPARAM ) snipName );
 
                             // Fetch the lang
                             lang = ( size_t ) SendMessage( ConfigWin.langCB, CB_GETCURSEL, 0, 0 );
@@ -1223,11 +1223,11 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
                             if ( lang == ( lang_menu.size() - 1 ) )
                                 lang = 255;
 
-                            msg = "Are you sure you want to delete the snip ";
-                            msg.append( snipName );
-                            msg.push_back( '?' );
+                            msg = TEXT("Are you sure you want to delete the snip ");
+                            msg += snipName;
+                            msg += TEXT("?");
 
-                            if ( MessageBoxA( hwndDlg, msg.c_str(), "Warning", MB_YESNO | MB_ICONQUESTION ) == IDYES )
+                            if ( MessageBox( hwndDlg, msg.c_str(), TEXT("Warning"), MB_YESNO | MB_ICONQUESTION ) == IDYES )
                             {
                                 // Delete it
                                 lang_ss << lang;
@@ -1238,7 +1238,7 @@ LRESULT CALLBACK DlgConfigProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARA
 
                                 for ( keymap::const_iterator i = snips_replica[lang_ss.str()].begin();
                                         i != snips_replica[lang_ss.str()].end(); i++ )
-                                    SendMessageA( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
+                                    SendMessage( ConfigWin.snip, LB_ADDSTRING, 0, ( LPARAM ) i->first.c_str() );
 
                                 SendMessage( ConfigWin.snipname, WM_SETTEXT, 0, ( LPARAM ) TEXT( "" ) );
                                 SendMessage( ConfigWin.text, WM_SETTEXT, 0, ( LPARAM ) TEXT( "" ) );
