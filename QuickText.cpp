@@ -570,11 +570,11 @@ void QuickText()
     if ( (endPos - startPos) > SZ_SNIP )
         return;
 
-    Sci_TextRange tr;
+    Sci_TextRangeFull tr;
 	tr.chrg.cpMin = startPos;
 	tr.chrg.cpMax = endPos;
 	tr.lpstrText = snip;
-    ::SendMessage( scintilla, SCI_GETTEXTRANGE, 0, (LPARAM)&tr );
+    ::SendMessage( scintilla, SCI_GETTEXTRANGEFULL, 0, (LPARAM)&tr );
 
     if ( strlen( snip ) == 0 && !cQuickText.editing )
     {
