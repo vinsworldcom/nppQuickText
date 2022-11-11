@@ -57,9 +57,11 @@ For 64-bit:
 
 ## Installation
 
+QuickText 0.2.6.1 and newer requires Notepad++ 8.4.6 or newer.
+
 Copy the:
-+ 32-bit: ./bin/QuickText.dll
-+ 64-bit: ./bin64/QuickText.dll
++ 32-bit: ./Release/Win32/QuickText.dll
++ 64-bit: ./Release/x64/QuickText.dll
 
 to the Notepad++ plugins folder:
 + In N++ <7.6, directly in the plugins/ folder
