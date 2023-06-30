@@ -146,96 +146,100 @@ When using the Settings "Substitution Text" GUI:
 
 ---
 
+## Language Codes
+
 ```
-LANGUAGE CODES
+0    Normal text
+1    PHP
+2    C
+3    C++
+4    C#
+5    Objective-C
+6    Java
+7    RC
+8    HTML
+9    XML
+10   Makefile
+11   Pascal
+12   Batch
+13   ini
+14   NFO
+15   (User Defined Language Type)
+16   ASP
+17   SQL
+18   Visual Basic
+19   JavaScript  (Do not use for JavaScript, use 58 instead)
+20   CSS
+21   Perl
+22   Python
+23   Lua
+24   TeX
+25   Fortran free form
+26   Shell
+27   ActionScript
+28   NSIS
+29   TCL
+30   Lisp
+31   Scheme
+32   Assembly
+33   Diff
+34   Properties file
+35   PostScript
+36   Ruby
+37   Smalltalk
+38   VHDL
+39   KiXtart
+40   AutoIt
+41   CAML
+42   Ada
+43   Verilog
+44   MATLAB
+45   Haskell
+46   Inno Setup
+47   Internal Search
+48   CMake
+49   YAML
+50   COBOL
+51   Gui4Cli
+52   D
+53   PowerShell
+54   R
+55   JSP
+56   CoffeeScript
+57   json
+58   JavaScript
+59   Fortran fixed form
+60   BaanC
+61   S-Record
+62   Intel HEX
+63   Tektronix extended HEX
+64   Swift
+65   ASN.1
+66   AviSynth
+67   BlitzBasic
+68   PureBasic
+69   FreeBasic
+70   Csound
+71   Erlang
+72   ESCRIPT
+73   Forth
+74   LaTeX
+75   MMIXAL
+76   Nim
+77   Nncrontab
+78   OScript
+79   REBOL
+80   registry
+81   Rust
+82   Spice
+83   txt2tags
+84   Visual Prolog
+85   TypeScript
+86   json5
+87   mssql
+88   GDScript
+89   Hollywood
+90   External
 
-0   TEXT
-1   PHP
-2   C
-3   CPP
-4   CS
-5   OBJC
-6   JAVA
-7   RC
-8   HTML
-9   XML
-10  MAKEFILE
-11  PASCAL
-12  BATCH
-13  INI
-14  ASCII
-15  USER
-16  ASP
-17  SQL
-18  VB
-19  JS    # Do not use for JavaScript, use 58 instead
-20  CSS
-21  PERL
-22  PYTHON
-23  LUA
-24  TEX
-25  FORTRAN
-26  BASH
-27  FLASH
-28  NSIS
-29  TCL
-30  LISP
-31  SCHEME
-32  ASM
-33  DIFF
-34  PROPS
-35  PS
-36  RUBY
-37  SMALLTALK
-38  VHDL
-39  KIX
-40  AU3
-41  CAML
-42  ADA
-43  VERILOG
-44  MATLAB
-45  HASKELL
-46  INNO
-47  SEARCHRESULT
-48  CMAKE
-49  YAML
-50  COBOL
-51  GUI4CLI
-52  D
-53  POWERSHELL
-54  R
-55  JSP
-56  COFFEESCRIPT
-57  JSON
-58  JAVASCRIPT
-59  FORTRAN_77
-60  BAANC
-61  SREC
-62  IHEX
-63  TEHEX
-64  SWIFT
-65  ASN1
-66  AVS
-67  BLITZBASIC
-68  PUREBASIC
-69  FREEBASIC
-70  CSOUND
-71  ERLANG
-72  ESCRIPT
-73  FORTH
-74  LATEX
-75  MMIXAL
-76  NIM
-77  NNCRONTAB
-78  OSCRIPT
-79  REBOL
-80  REGISTRY
-81  RUST
-82  SPICE
-83  TXT2TAGS
-84  VISUALPROLOG
-85  TYPESCRIPT
-86  EXTERNAL
-
-255 GLOBAL
+255  GLOBAL
 ```
